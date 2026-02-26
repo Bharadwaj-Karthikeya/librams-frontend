@@ -1,65 +1,42 @@
+import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { logout } from "../store/slices/authSlice";
-import { useNavigate } from "react-router-dom";
+import { fetchBooks } from "../store/slices/booksSlice";
+import Layout from "../components/layout/Layout";
 
 export default function Dashboard() {
-  const { user } = useSelector((state) => state.auth);
+  const { books, loading, error } = useSelector((state) => state.books);
   const dispatch = useDispatch();
-  const navigate = useNavigate();
 
-  const handleLogout = () => {
-    dispatch(logout());
-    navigate("/");
-  };
+  useEffect(() => {
+    dispatch(fetchBooks());
+  }, [dispatch]);
 
   return (
-    <div className="min-h-screen flex bg-gray-100">
-      
-      {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-md p-6">
-        <h2 className="text-xl font-bold mb-6">Library Dashboard</h2>
+    <Layout>
+      <div className="bg-white p-6 rounded-xl shadow-sm">
+        <h2 className="text-lg font-semibold mb-4">Books</h2>
 
-        <nav className="flex flex-col gap-4">
-          <button className="text-left hover:text-blue-600">
-            Books
-          </button>
+        {loading && <p>Loading books...</p>}
+        {error && <p className="text-red-500">{error}</p>}
 
-          <button className="text-left hover:text-blue-600">
-            Issues
-          </button>
+        {!loading && books.length === 0 && (
+          <p>No books found.</p>
+        )}
 
-          <button className="text-left hover:text-blue-600">
-            Profile
-          </button>
-        </nav>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 p-8">
-        
-        {/* Top Bar */}
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-semibold">
-            Welcome, {user?.name || user?.email}
-          </h1>
-
-          <button
-            onClick={handleLogout}
-            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition"
-          >
-            Logout
-          </button>
+        <div className="grid grid-cols-3 gap-4">
+          {books.map((book) => (
+            <div key={book._id} className="border p-4 rounded-lg">
+              <h3 className="font-semibold">{book.title}</h3>
+              <p className="text-sm text-gray-600">
+                {book.author}
+              </p>
+              <p className="text-sm mt-2">
+                Available: {book.availableCopies}
+              </p>
+            </div>
+          ))}
         </div>
-
-        {/* Content Section */}
-        <div className="bg-white p-6 rounded-xl shadow-sm">
-          <h2 className="text-lg font-semibold mb-4">Overview</h2>
-
-          <p className="text-gray-600">
-            This is dashboard. Books and issues will appear here.
-          </p>
-        </div>
-      </main>
-    </div>
+      </div>
+    </Layout>
   );
 }
