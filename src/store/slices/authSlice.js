@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { loginUser, registerUser } from "../../api/auth.api";
+import { loginUser, registerUser, getProfile } from "../../api/auth.api";
 
 /*
 -----------------------------------
@@ -31,6 +31,23 @@ export const register = createAsyncThunk(
       return response.data;
     } catch (error) {
       return rejectWithValue(error?.message || "Registration failed");
+    }
+  }
+);
+
+/*
+-----------------------------------
+PROFILE
+-----------------------------------
+*/
+export const fetchProfile = createAsyncThunk(
+  "auth/fetchProfile",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await getProfile();
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error?.message || "Failed to load profile");
     }
   }
 );
@@ -84,6 +101,21 @@ const authSlice = createSlice({
         state.loading = false;
       })
       .addCase(register.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // PROFILE
+      .addCase(fetchProfile.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchProfile.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+        localStorage.setItem("user", JSON.stringify(action.payload));
+      })
+      .addCase(fetchProfile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });
