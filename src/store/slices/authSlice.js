@@ -8,12 +8,12 @@ LOGIN
 */
 export const login = createAsyncThunk(
   "auth/login",
-  async (credentials, { rejectWithValue }) => {
+  async (data, { rejectWithValue }) => {
     try {
-      const response = await loginUser(credentials);
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error?.message || "Login failed");
+      const res = await loginUser(data);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message);
     }
   }
 );
@@ -35,12 +35,9 @@ export const register = createAsyncThunk(
   }
 );
 
-const token = localStorage.getItem("token");
-
 const initialState = {
-  user: null,
-  token,
-  isAuthenticated: !!token,
+  user: JSON.parse(localStorage.getItem("user")) || null,
+  token: localStorage.getItem("token") || null,
   loading: false,
   error: null,
 };
@@ -52,23 +49,26 @@ const authSlice = createSlice({
     logout: (state) => {
       state.user = null;
       state.token = null;
-      state.isAuthenticated = false;
       localStorage.removeItem("token");
+      localStorage.removeItem("user");
     },
   },
   extraReducers: (builder) => {
     builder
-      // LOGIN
       .addCase(login.pending, (state) => {
         state.loading = true;
-        state.error = null;
       })
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload.user;
         state.token = action.payload.token;
-        state.isAuthenticated = true;
+
         localStorage.setItem("token", action.payload.token);
+        localStorage.setItem(
+          "user",
+          JSON.stringify(action.payload.user)
+        );
+        console.log("Login successful:", action.payload);
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;

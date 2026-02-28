@@ -16,7 +16,7 @@ export default function Dashboard() {
       <div className="bg-white p-6 rounded-xl shadow-sm">
         <h2 className="text-lg font-semibold mb-4">Books</h2>
 
-        {loading && <p>Loading books...</p>}
+        
         {error && <p className="text-red-500">{error}</p>}
 
         {!loading && books.length === 0 && (
@@ -36,6 +36,7 @@ export default function Dashboard() {
             </div>
           ))}
         </div>
+        {loading && <p>Loading books...</p>}
       </div>
     </Layout>
   );

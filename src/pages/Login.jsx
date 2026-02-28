@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 export default function Login() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, error, isAuthenticated } = useSelector(
+  const { loading, error, user } = useSelector(
     (state) => state.auth
   );
 
@@ -29,11 +29,11 @@ export default function Login() {
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (user) {
       toast.success("Login successful");
       navigate("/dashboard");
     }
-  }, [isAuthenticated, navigate]);
+  }, [user, navigate]);
 
   useEffect(() => {
     if (error) {

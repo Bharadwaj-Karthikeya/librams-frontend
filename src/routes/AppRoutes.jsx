@@ -3,6 +3,8 @@ import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Dashboard from "../pages/Dashboard";
 import ProtectedRoute from "./ProtectedRoute";
+import BookDetails from "../pages/BookDetails";
+import Books from "../pages/Books";
 
 export default function AppRoutes() {
   return (
@@ -22,7 +24,16 @@ export default function AppRoutes() {
         path="/books"
         element={
           <ProtectedRoute>
-            <Dashboard />
+            <Books />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/books/:id"
+        element={
+          <ProtectedRoute>
+            <BookDetails />
           </ProtectedRoute>
         }
       />
