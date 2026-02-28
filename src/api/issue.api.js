@@ -1,16 +1,19 @@
 import api from "./axios";
 
-export const issueBook = (data) =>
-  api.post("/issue", data);
+export const issueBookAPI = (data) =>
+  api.post("/issues/issue", data);
 
-export const returnIssue = (id) =>
-  api.post(`/return/${id}`);
+export const returnIssueAPI = (id) =>
+  api.post(`/issues/return/${id}`);
 
-export const extendIssue = (id, data) =>
-  api.put(`/extend/${id}`, data);
+export const extendDueDateAPI = (id, newDueDate) =>
+  api.put(`/issues/extend/${id}`, { newDueDate });
 
-export const getUserIssues = () =>
-  api.get("/issue/user");
+export const fetchUserIssuesAPI = () =>
+  api.get("/issues/user");
 
-export const getOverdueIssues = () =>
-  api.get("/issue/overdue");
+export const fetchAllIssuesAPI = () =>
+  api.get("/issues");
+
+export const fetchOverdueIssuesAPI = () =>
+  api.get("/issues/overdue");

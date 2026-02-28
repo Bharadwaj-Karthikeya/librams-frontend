@@ -5,6 +5,7 @@ import Dashboard from "../pages/Dashboard";
 import ProtectedRoute from "./ProtectedRoute";
 import BookDetails from "../pages/BookDetails";
 import Books from "../pages/Books";
+import Issues from "../pages/Issues";
 
 export default function AppRoutes() {
   return (
@@ -26,6 +27,15 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute>
             <Books />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/issues"
+        element={
+          <ProtectedRoute>
+            <Issues />
           </ProtectedRoute>
         }
       />
