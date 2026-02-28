@@ -6,6 +6,8 @@ import {
   updateBook as updateBookAPI,
   deleteBook as deleteBookAPI,
   deleteBookPermanently as deleteBookPermanentlyAPI,
+  searchBooks as searchBooksAPI,
+  getBooksByCategory as getBooksByCategoryAPI,
 } from "../../api/books.api";
 
 /* FETCH ALL */
@@ -30,6 +32,36 @@ export const fetchBookById = createAsyncThunk(
       return res.data;
     } catch (err) {
       return rejectWithValue(err?.message);
+    }
+  }
+);
+
+/* SEARCH */
+export const searchBooksByTerm = createAsyncThunk(
+  "books/searchBooksByTerm",
+  async (searchTerm, { rejectWithValue }) => {
+    try {
+      const res = await searchBooksAPI(searchTerm);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(
+        err?.message || err?.response?.data?.message || "Search failed"
+      );
+    }
+  }
+);
+
+/* CATEGORY */
+export const fetchBooksByCategory = createAsyncThunk(
+  "books/fetchBooksByCategory",
+  async (category, { rejectWithValue }) => {
+    try {
+      const res = await getBooksByCategoryAPI(category);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(
+        err?.message || err?.response?.data?.message || "Category fetch failed"
+      );
     }
   }
 );
@@ -129,6 +161,7 @@ const booksSlice = createSlice({
   name: "books",
   initialState: {
     books: [],
+    allBooks: [],
     selectedBook: null,
     loading: false,
     error: null,
@@ -138,26 +171,60 @@ const booksSlice = createSlice({
     builder
       .addCase(fetchBooks.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(fetchBooks.fulfilled, (state, action) => {
         state.loading = false;
         state.books = action.payload;
+        state.allBooks = action.payload;
       })
       .addCase(fetchBooks.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload || "Failed to load books";
       })
 
       .addCase(fetchBookById.fulfilled, (state, action) => {
         state.selectedBook = action.payload;
       })
 
+      .addCase(searchBooksByTerm.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(searchBooksByTerm.fulfilled, (state, action) => {
+        state.loading = false;
+        state.books = action.payload;
+      })
+      .addCase(searchBooksByTerm.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      .addCase(fetchBooksByCategory.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchBooksByCategory.fulfilled, (state, action) => {
+        state.loading = false;
+        state.books = action.payload;
+      })
+      .addCase(fetchBooksByCategory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
       .addCase(createBook.fulfilled, (state, action) => {
         state.books.unshift(action.payload);
+        state.allBooks.unshift(action.payload);
       })
 
       .addCase(updateBook.fulfilled, (state, action) => {
         state.books = state.books.map((b) =>
+          b._id === action.payload._id
+            ? action.payload
+            : b
+        );
+        state.allBooks = state.allBooks.map((b) =>
           b._id === action.payload._id
             ? action.payload
             : b
@@ -168,10 +235,16 @@ const booksSlice = createSlice({
         state.books = state.books.filter(
           (b) => b._id !== action.payload
         );
+        state.allBooks = state.allBooks.filter(
+          (b) => b._id !== action.payload
+        );
       })
 
       .addCase(deleteBookPermanently.fulfilled, (state, action) => {
         state.books = state.books.filter(
+          (b) => b._id !== action.payload
+        );
+        state.allBooks = state.allBooks.filter(
           (b) => b._id !== action.payload
         );
       });

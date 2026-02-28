@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchBooks,
@@ -6,6 +6,8 @@ import {
   updateBook,
   deleteBook,
   deleteBookPermanently,
+  searchBooksByTerm,
+  fetchBooksByCategory,
 } from "../store/slices/booksSlice";
 import Layout from "../components/layout/Layout";
 import Modal from "../components/ui/Modal";
@@ -16,18 +18,59 @@ import toast from "react-hot-toast";
 
 export default function Books() {
   const dispatch = useDispatch();
-  const { books, loading, error } = useSelector((state) => state.books);
+  const { books, allBooks, loading, error } = useSelector((state) => state.books);
   const { user } = useSelector((state) => state.auth);
 
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [showCreate, setShowCreate] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [editingBook, setEditingBook] = useState(null);
   const [confirmState, setConfirmState] = useState(null);
+  const lastSearchTerm = useRef("");
 
   useEffect(() => {
     dispatch(fetchBooks());
   }, [dispatch]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+    }, 400);
+
+    return () => clearTimeout(handler);
+  }, [search]);
+
+  useEffect(() => {
+    if (debouncedSearch.length >= 2) {
+      lastSearchTerm.current = debouncedSearch;
+      dispatch(searchBooksByTerm(debouncedSearch));
+      return;
+    }
+
+    if (
+      debouncedSearch.length === 0 &&
+      lastSearchTerm.current.length >= 2
+    ) {
+      lastSearchTerm.current = "";
+      if (selectedCategory === "all") {
+        dispatch(fetchBooks());
+      } else {
+        dispatch(fetchBooksByCategory(selectedCategory));
+      }
+    }
+  }, [debouncedSearch, dispatch, selectedCategory]);
+
+  const categories = useMemo(() => {
+    const unique = new Set();
+    allBooks.forEach((book) => {
+      if (book.category) {
+        unique.add(book.category);
+      }
+    });
+    return Array.from(unique);
+  }, [allBooks]);
 
   /* ---------------- CREATE ---------------- */
   const handleCreate = async (data) => {
@@ -59,10 +102,17 @@ export default function Books() {
     }
   };
 
-  /* ---------------- SEARCH ---------------- */
-  const filteredBooks = books.filter((book) =>
-    book.title.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleCategoryChange = (category) => {
+    setSelectedCategory(category);
+    setSearch("");
+    lastSearchTerm.current = "";
+
+    if (category === "all") {
+      dispatch(fetchBooks());
+    } else {
+      dispatch(fetchBooksByCategory(category));
+    }
+  };
 
   return (
     <Layout>
@@ -83,24 +133,50 @@ export default function Books() {
         </div>
 
         {/* Search */}
-        <input
-          type="text"
-          placeholder="Search by title..."
-          className="w-full mb-6 p-2 border rounded-md"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+        <div className="mb-6">
+          <input
+            type="text"
+            placeholder="Search books (min. 2 characters)"
+            className="w-full p-2 border rounded-md"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Searches run against the server after you stop typing.
+          </p>
+        </div>
+
+        {/* Categories */}
+        {categories.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-6">
+            <button
+              onClick={() => handleCategoryChange("all")}
+              className={`px-3 py-1 rounded-full text-sm border ${selectedCategory === "all" ? "bg-blue-600 text-white border-blue-600" : "bg-gray-100 text-gray-700 border-gray-200"}`}
+            >
+              All
+            </button>
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => handleCategoryChange(category)}
+                className={`px-3 py-1 rounded-full text-sm border ${selectedCategory === category ? "bg-blue-600 text-white border-blue-600" : "bg-gray-100 text-gray-700 border-gray-200"}`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* States */}
         {loading && <p>Loading books...</p>}
         {error && <p className="text-red-500">{error}</p>}
-        {!loading && filteredBooks.length === 0 && (
+        {!loading && books.length === 0 && (
           <p>No books found.</p>
         )}
 
         {/* Books Grid */}
         <div className="grid grid-cols-3 gap-4">
-          {filteredBooks.map((book) => (
+          {books.map((book) => (
             <div
               key={book._id}
               className="border p-4 rounded-lg hover:shadow-md transition"

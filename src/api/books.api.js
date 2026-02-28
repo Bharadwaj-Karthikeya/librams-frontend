@@ -10,6 +10,10 @@ export const getBooks = () =>
 export const getBookById = (bookId) =>
   api.get(`/books/details/${bookId}`);
 
+// GET CATEGORY
+export const getBooksByCategory = (category) =>
+  api.get(`/books/category/${encodeURIComponent(category)}`);
+
 // CREATE
 export const createBook = (formData) =>
   api.post("/books/add", formData, {
@@ -36,4 +40,4 @@ export const deleteBookPermanently = (bookId) =>
 
 // SEARCH
 export const searchBooks = (searchTerm) =>
-  api.get(`/books/search?searchTerm=${searchTerm}`);
+  api.get(`/books/search?searchTerm=${encodeURIComponent(searchTerm)}`);
