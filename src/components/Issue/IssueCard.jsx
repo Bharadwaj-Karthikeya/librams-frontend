@@ -3,17 +3,18 @@ export default function IssueCard({
   onReturn,
   onExtend,
   canManageIssues = false,
-  allowSelfActions = false,
+  showRecipient = true,
 }) {
-  const canActOnIssue =
-    issue.status === "issued" && (canManageIssues || allowSelfActions);
+  const canActOnIssue = canManageIssues && issue.status === "issued";
 
   return (
     <div className="border p-4 rounded-lg">
       <h3 className="font-semibold">{issue.book?.title}</h3>
-      <p className="text-sm text-gray-600">
-        Issued To: {issue.toUser?.email}
-      </p>
+      {showRecipient && (
+        <p className="text-sm text-gray-600">
+          Issued To: {issue.toUser?.email}
+        </p>
+      )}
       <p className="text-sm">
         Due: {new Date(issue.dueDate).toLocaleDateString()}
       </p>

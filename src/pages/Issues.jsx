@@ -4,12 +4,14 @@ import toast from "react-hot-toast";
 import Layout from "../components/layout/Layout";
 import IssueForm from "../components/issue/IssueForm";
 import IssueCard from "../components/issue/IssueCard";
+import Modal from "../components/ui/Modal";
 import {
   issueBook,
   returnIssue,
   extendDueDate,
   fetchUserIssues,
   fetchAllIssues,
+  fetchOverdueIssues,
 } from "../store/slices/issueSlice";
 
 export default function Issues() {
@@ -19,17 +21,27 @@ export default function Issues() {
 
   const canManageIssues = user?.role === "admin" || user?.role === "staff";
   const [statusFilter, setStatusFilter] = useState("all");
+  const [activeAdminTab, setActiveAdminTab] = useState("all");
+  const [showIssueModal, setShowIssueModal] = useState(false);
   const statusOptions = [
     { label: "All", value: "all" },
     { label: "Issued", value: "issued" },
     { label: "Returned", value: "returned" },
     { label: "Overdue", value: "overdue" },
   ];
+  const adminTabs = [
+    { label: "All Issues", value: "all" },
+    { label: "Overdue", value: "overdue" },
+  ];
 
   const refreshIssues = () => {
     if (!user) return;
     if (canManageIssues) {
-      dispatch(fetchAllIssues());
+      if (activeAdminTab === "overdue") {
+        dispatch(fetchOverdueIssues());
+      } else {
+        dispatch(fetchAllIssues());
+      }
     } else {
       dispatch(fetchUserIssues());
     }
@@ -38,7 +50,7 @@ export default function Issues() {
   useEffect(() => {
     refreshIssues();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canManageIssues]);
+  }, [canManageIssues, activeAdminTab]);
 
   useEffect(() => {
     if (canManageIssues) {
@@ -58,6 +70,7 @@ export default function Issues() {
     if (!result.error) {
       toast.success("Book issued successfully");
       refreshIssues();
+      setShowIssueModal(false);
     } else {
       toast.error(result.payload || "Failed to issue book");
     }
@@ -88,7 +101,8 @@ export default function Issues() {
   };
 
   return (
-    <Layout>
+    <>
+      <Layout>
       <div className="bg-white p-6 rounded-2xl shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
@@ -100,18 +114,35 @@ export default function Issues() {
             </p>
           </div>
 
-          <button
-            onClick={refreshIssues}
-            className="self-start md:self-auto px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-50"
-          >
-            Refresh
-          </button>
+          <div className="flex items-center gap-3 self-start md:self-auto">
+            {canManageIssues && (
+              <button
+                onClick={() => setShowIssueModal(true)}
+                className="px-4 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700"
+              >
+                + Issue Book
+              </button>
+            )}
+            <button
+              onClick={refreshIssues}
+              className="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-50"
+            >
+              Refresh
+            </button>
+          </div>
         </div>
 
         {canManageIssues && (
-          <div className="mb-8 bg-gray-50 border border-dashed border-gray-200 rounded-2xl p-5">
-            <h3 className="text-lg font-semibold mb-4">Issue a book</h3>
-            <IssueForm onSubmit={handleIssueBook} />
+          <div className="flex flex-wrap gap-2 mb-6">
+            {adminTabs.map((tab) => (
+              <button
+                key={tab.value}
+                onClick={() => setActiveAdminTab(tab.value)}
+                className={`px-3 py-1 rounded-full text-sm border transition ${activeAdminTab === tab.value ? "bg-blue-600 text-white border-blue-600" : "bg-gray-100 text-gray-700 border-gray-200"}`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
         )}
 
@@ -147,6 +178,23 @@ export default function Issues() {
           ))}
         </div>
       </div>
-    </Layout>
+      </Layout>
+
+      {showIssueModal && (
+        <Modal onClose={() => setShowIssueModal(false)}>
+          <div className="w-full">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-xl font-semibold">Issue a book</h3>
+                <p className="text-sm text-gray-500">
+                  Provide ISBN, student email, and due date to issue.
+                </p>
+              </div>
+            </div>
+            <IssueForm onSubmit={handleIssueBook} />
+          </div>
+        </Modal>
+      )}
+    </>
   );
 }

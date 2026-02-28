@@ -1,13 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import toast from "react-hot-toast";
 import Layout from "../components/layout/Layout";
 import IssueCard from "../components/issue/IssueCard";
-import {
-	fetchUserIssues,
-	returnIssue,
-	extendDueDate,
-} from "../store/slices/issueSlice";
+import { fetchUserIssues } from "../store/slices/issueSlice";
 
 const STATUS_OPTIONS = [
 	{ label: "All", value: "all" },
@@ -37,28 +32,6 @@ export default function UserIssues() {
 		return issues.filter((issue) => issue.status === statusFilter);
 	}, [issues, statusFilter]);
 
-	const handleReturn = async (id) => {
-		const result = await dispatch(returnIssue(id));
-		if (!result.error) {
-			toast.success("Issue marked as returned");
-			refreshIssues();
-		} else {
-			toast.error(result.payload || "Failed to return issue");
-		}
-	};
-
-	const handleExtend = async (id) => {
-		const newDueDate = window.prompt("Enter new due date (YYYY-MM-DD)");
-		if (!newDueDate) return;
-		const result = await dispatch(extendDueDate({ id, newDueDate }));
-		if (!result.error) {
-			toast.success("Due date updated");
-			refreshIssues();
-		} else {
-			toast.error(result.payload || "Failed to extend due date");
-		}
-	};
-
 	return (
 		<Layout>
 			<div className="bg-white p-6 rounded-2xl shadow-sm">
@@ -66,7 +39,7 @@ export default function UserIssues() {
 					<div>
 						<h2 className="text-2xl font-semibold">My Issues</h2>
 						<p className="text-sm text-gray-500">
-							Track the books you currently have and manage active issues.
+							Review the books you have borrowed and their current status.
 						</p>
 					</div>
 
@@ -98,13 +71,7 @@ export default function UserIssues() {
 
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 					{filteredIssues.map((issue) => (
-						<IssueCard
-							key={issue._id}
-							issue={issue}
-							onReturn={handleReturn}
-							onExtend={handleExtend}
-							allowSelfActions
-						/>
+						<IssueCard key={issue._id} issue={issue} showRecipient={false} />
 					))}
 				</div>
 			</div>
