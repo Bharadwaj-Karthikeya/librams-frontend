@@ -6,6 +6,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import BookDetails from "../pages/BookDetails";
 import Books from "../pages/Books";
 import Issues from "../pages/Issues";
+import UserIssues from "../pages/UserIssues";
 
 export default function AppRoutes() {
   return (
@@ -36,6 +37,15 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute>
             <Issues />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/my-issues"
+        element={
+          <ProtectedRoute>
+            <UserIssues />
           </ProtectedRoute>
         }
       />

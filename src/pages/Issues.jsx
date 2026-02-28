@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import Layout from "../components/layout/Layout";
@@ -18,6 +18,13 @@ export default function Issues() {
   const { user } = useSelector((state) => state.auth);
 
   const canManageIssues = user?.role === "admin" || user?.role === "staff";
+  const [statusFilter, setStatusFilter] = useState("all");
+  const statusOptions = [
+    { label: "All", value: "all" },
+    { label: "Issued", value: "issued" },
+    { label: "Returned", value: "returned" },
+    { label: "Overdue", value: "overdue" },
+  ];
 
   const refreshIssues = () => {
     if (!user) return;
@@ -32,6 +39,19 @@ export default function Issues() {
     refreshIssues();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canManageIssues]);
+
+  useEffect(() => {
+    if (canManageIssues) {
+      setStatusFilter("all");
+    }
+  }, [canManageIssues]);
+
+  const filteredIssues = useMemo(() => {
+    if (canManageIssues || statusFilter === "all") {
+      return issues;
+    }
+    return issues.filter((issue) => issue.status === statusFilter);
+  }, [issues, canManageIssues, statusFilter]);
 
   const handleIssueBook = async (data) => {
     const result = await dispatch(issueBook(data));
@@ -95,14 +115,28 @@ export default function Issues() {
           </div>
         )}
 
+        {!canManageIssues && (
+          <div className="flex flex-wrap gap-2 mb-6">
+            {statusOptions.map((status) => (
+              <button
+                key={status.value}
+                onClick={() => setStatusFilter(status.value)}
+                className={`px-3 py-1 rounded-full text-sm border transition ${statusFilter === status.value ? "bg-blue-600 text-white border-blue-600" : "bg-gray-100 text-gray-700 border-gray-200"}`}
+              >
+                {status.label}
+              </button>
+            ))}
+          </div>
+        )}
+
         {loading && <p>Loading issues...</p>}
         {error && <p className="text-red-500">{error}</p>}
-        {!loading && issues.length === 0 && (
-          <p className="text-gray-500">No issues found.</p>
+        {!loading && filteredIssues.length === 0 && (
+          <p className="text-gray-500">No issues found for this view.</p>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {issues.map((issue) => (
+          {filteredIssues.map((issue) => (
             <IssueCard
               key={issue._id}
               issue={issue}

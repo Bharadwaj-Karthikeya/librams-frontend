@@ -28,9 +28,17 @@ export default function Layout({ children }) {
             Books
           </Link>
 
-          <Link to="/issues" className="hover:text-blue-600">
-            Issues
-          </Link>
+          {user?.role !== "student" && (
+            <Link to="/issues" className="hover:text-blue-600">
+              Issues
+            </Link>
+          )}
+
+          {user?.role === "student" && (
+            <Link to="/my-issues" className="hover:text-blue-600">
+              My Issues
+            </Link>
+          )}
 
           <Link to="/profile" className="hover:text-blue-600">
             Profile

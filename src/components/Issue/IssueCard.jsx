@@ -3,7 +3,11 @@ export default function IssueCard({
   onReturn,
   onExtend,
   canManageIssues = false,
+  allowSelfActions = false,
 }) {
+  const canActOnIssue =
+    issue.status === "issued" && (canManageIssues || allowSelfActions);
+
   return (
     <div className="border p-4 rounded-lg">
       <h3 className="font-semibold">{issue.book?.title}</h3>
@@ -14,7 +18,11 @@ export default function IssueCard({
         Due: {new Date(issue.dueDate).toLocaleDateString()}
       </p>
 
-      {canManageIssues && issue.status === "issued" && (
+      <p className="text-xs mt-1 uppercase tracking-wide text-gray-500">
+        Status: {issue.status}
+      </p>
+
+      {canActOnIssue && (
         <div className="flex gap-3 mt-3">
           <button
             onClick={() => onReturn(issue._id)}
