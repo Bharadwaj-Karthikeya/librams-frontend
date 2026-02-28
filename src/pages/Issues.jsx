@@ -108,6 +108,7 @@ export default function Issues() {
               issue={issue}
               onReturn={handleReturnBook}
               onExtend={handleExtend}
+              canManageIssues={canManageIssues}
             />
           ))}
         </div>

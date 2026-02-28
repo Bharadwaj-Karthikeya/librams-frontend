@@ -8,11 +8,13 @@ export default function Register() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, error } = useSelector((state) => state.auth);
+  const [submitted, setSubmitted] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
+    role: "student",
   });
 
   const handleChange = (e) => {
@@ -24,21 +26,24 @@ export default function Register() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setSubmitted(true);
     dispatch(register(formData));
   };
 
   useEffect(() => {
+    if (!submitted) return;
+
+    if (!loading && error) {
+      toast.error(error);
+      setSubmitted(false);
+    }
+
     if (!loading && !error) {
       toast.success("Registration successful. Please login.");
+      setSubmitted(false);
       navigate("/");
     }
-  }, [loading, error, navigate]);
-
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-    }
-  }, [error]);
+  }, [submitted, loading, error, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -77,6 +82,17 @@ export default function Register() {
           onChange={handleChange}
           required
         />
+
+        <select
+          name="role"
+          className="w-full mb-4 p-2 border rounded-md bg-white"
+          value={formData.role}
+          onChange={handleChange}
+        >
+          <option value="student">Student</option>
+          <option value="staff">Staff</option>
+          <option value="admin">Admin</option>
+        </select>
 
         <button
           type="submit"

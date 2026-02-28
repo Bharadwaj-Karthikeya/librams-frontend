@@ -1,4 +1,9 @@
-export default function IssueCard({ issue, onReturn, onExtend }) {
+export default function IssueCard({
+  issue,
+  onReturn,
+  onExtend,
+  canManageIssues = false,
+}) {
   return (
     <div className="border p-4 rounded-lg">
       <h3 className="font-semibold">{issue.book?.title}</h3>
@@ -9,7 +14,7 @@ export default function IssueCard({ issue, onReturn, onExtend }) {
         Due: {new Date(issue.dueDate).toLocaleDateString()}
       </p>
 
-      {issue.status === "issued" && (
+      {canManageIssues && issue.status === "issued" && (
         <div className="flex gap-3 mt-3">
           <button
             onClick={() => onReturn(issue._id)}
