@@ -72,10 +72,27 @@ export const createBook = createAsyncThunk(
   async (data, { rejectWithValue }) => {
     try {
       const formData = new FormData();
+      const allowedFields = [
+        "title",
+        "author",
+        "isbn",
+        "category",
+        "description",
+        "publishedYear",
+        "copies",
+      ];
 
-      Object.keys(data).forEach((key) => {
-        formData.append(key, data[key]);
+      allowedFields.forEach((field) => {
+        const value = data[field];
+        if (value === undefined || value === null || value === "") {
+          return;
+        }
+        formData.append(field, value);
       });
+
+      if (data.bookCoverFile) {
+        formData.append("bookCover", data.bookCoverFile);
+      }
 
       const res = await createBookAPI(formData);
       return res.data;
@@ -103,19 +120,23 @@ export const updateBook = createAsyncThunk(
         "author",
         "copies",
         "availableCopies",
-        "publishedYear",
         "category",
+        "description",
         "isActive",
         "isAvailableforIssue",
-        "bookCover",
       ];
 
       allowedFields.forEach((field) => {
-        if (data[field] !== undefined) {
-          formData.append(field, data[field]);
+        const value = data[field];
+        if (value === undefined || value === null || value === "") {
+          return;
         }
-        console.log(field, data[field]);
+        formData.append(field, value);
       });
+
+      if (data.bookCoverFile) {
+        formData.append("bookCover", data.bookCoverFile);
+      }
 
       const res = await updateBookAPI(formData);
       return res.data;
@@ -165,6 +186,7 @@ const booksSlice = createSlice({
     selectedBook: null,
     loading: false,
     error: null,
+    currentSearchTerm: "",
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -172,6 +194,7 @@ const booksSlice = createSlice({
       .addCase(fetchBooks.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.currentSearchTerm = "";
       })
       .addCase(fetchBooks.fulfilled, (state, action) => {
         state.loading = false;
@@ -187,15 +210,22 @@ const booksSlice = createSlice({
         state.selectedBook = action.payload;
       })
 
-      .addCase(searchBooksByTerm.pending, (state) => {
+      .addCase(searchBooksByTerm.pending, (state, action) => {
         state.loading = true;
         state.error = null;
+        state.currentSearchTerm = action.meta.arg || "";
       })
       .addCase(searchBooksByTerm.fulfilled, (state, action) => {
+        if (action.meta.arg !== state.currentSearchTerm) {
+          return;
+        }
         state.loading = false;
         state.books = action.payload;
       })
       .addCase(searchBooksByTerm.rejected, (state, action) => {
+        if (action.meta.arg !== state.currentSearchTerm) {
+          return;
+        }
         state.loading = false;
         state.error = action.payload;
       })
@@ -203,6 +233,7 @@ const booksSlice = createSlice({
       .addCase(fetchBooksByCategory.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.currentSearchTerm = "";
       })
       .addCase(fetchBooksByCategory.fulfilled, (state, action) => {
         state.loading = false;
