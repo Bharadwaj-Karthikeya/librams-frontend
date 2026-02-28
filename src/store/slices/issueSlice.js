@@ -6,6 +6,8 @@ import {
   fetchUserIssuesAPI,
   fetchAllIssuesAPI,
   fetchOverdueIssuesAPI,
+  fetchBookIssueHistoryAPI,
+  fetchIssueDetailsAPI,
 } from "../../api/issue.api";
 
 export const issueBook = createAsyncThunk(
@@ -80,38 +82,84 @@ export const fetchOverdueIssues = createAsyncThunk(
   }
 );
 
+export const fetchBookIssueHistory = createAsyncThunk(
+  "issues/fetchBookIssueHistory",
+  async (bookId, { rejectWithValue }) => {
+    try {
+      const res = await fetchBookIssueHistoryAPI(bookId);
+      return { history: res.data };
+    } catch (err) {
+      return rejectWithValue("Failed to load issue history");
+    }
+  }
+);
+
+export const fetchIssueDetails = createAsyncThunk(
+  "issues/fetchIssueDetails",
+  async (issueId, { rejectWithValue }) => {
+    try {
+      const res = await fetchIssueDetailsAPI(issueId);
+      return { issue: res.data };
+    } catch (err) {
+      return rejectWithValue("Failed to load issue details");
+    }
+  }
+);
+
+const setListPending = (state) => {
+  state.loading = true;
+  state.error = null;
+};
+
+const setListRejected = (state, action) => {
+  state.loading = false;
+  state.error = action.payload;
+};
+
 const issueSlice = createSlice({
   name: "issues",
   initialState: {
     issues: [],
     loading: false,
     error: null,
+    bookIssueHistory: [],
+    selectedIssueDetails: null,
   },
   extraReducers: (builder) => {
     builder
-      .addMatcher(
-        (action) => action.type.startsWith("issues/") && action.type.endsWith("/pending"),
-        (state) => {
-          state.loading = true;
-          state.error = null;
-        }
-      )
-      .addMatcher(
-        (action) => action.type.startsWith("issues/") && action.type.endsWith("/fulfilled"),
-        (state, action) => {
-          state.loading = false;
-          if (Array.isArray(action.payload)) {
-            state.issues = action.payload;
-          }
-        }
-      )
-      .addMatcher(
-        (action) => action.type.startsWith("issues/") && action.type.endsWith("/rejected"),
-        (state, action) => {
-          state.loading = false;
-          state.error = action.payload;
-        }
-      );
+      .addCase(fetchUserIssues.pending, setListPending)
+      .addCase(fetchUserIssues.fulfilled, (state, action) => {
+        state.loading = false;
+        state.issues = action.payload;
+      })
+      .addCase(fetchUserIssues.rejected, setListRejected)
+
+      .addCase(fetchAllIssues.pending, setListPending)
+      .addCase(fetchAllIssues.fulfilled, (state, action) => {
+        state.loading = false;
+        state.issues = action.payload;
+      })
+      .addCase(fetchAllIssues.rejected, setListRejected)
+
+      .addCase(fetchOverdueIssues.pending, setListPending)
+      .addCase(fetchOverdueIssues.fulfilled, (state, action) => {
+        state.loading = false;
+        state.issues = action.payload;
+      })
+      .addCase(fetchOverdueIssues.rejected, setListRejected)
+
+      .addCase(fetchBookIssueHistory.fulfilled, (state, action) => {
+        state.bookIssueHistory = action.payload.history || [];
+      })
+      .addCase(fetchBookIssueHistory.rejected, (state) => {
+        state.bookIssueHistory = [];
+      })
+      .addCase(fetchIssueDetails.fulfilled, (state, action) => {
+        state.selectedIssueDetails = action.payload.issue || null;
+      })
+      .addCase(fetchIssueDetails.rejected, (state) => {
+        state.selectedIssueDetails = null;
+      });
   },
 });
 

@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import Layout from "../components/layout/Layout";
 import IssueForm from "../components/issue/IssueForm";
 import IssueCard from "../components/issue/IssueCard";
+import IssueDetailsModal from "../components/issue/IssueDetailsModal";
 import Modal from "../components/ui/Modal";
 import {
   issueBook,
@@ -23,6 +24,8 @@ export default function Issues() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [activeAdminTab, setActiveAdminTab] = useState("all");
   const [showIssueModal, setShowIssueModal] = useState(false);
+  const [selectedIssue, setSelectedIssue] = useState(null);
+  const [issueActionLoading, setIssueActionLoading] = useState(false);
   const statusOptions = [
     { label: "All", value: "all" },
     { label: "Issued", value: "issued" },
@@ -81,22 +84,54 @@ export default function Issues() {
     if (!result.error) {
       toast.success("Issue marked as returned");
       refreshIssues();
-    } else {
-      toast.error(result.payload || "Failed to return issue");
+      return true;
     }
+    toast.error(result.payload || "Failed to return issue");
+    return false;
   };
 
-  const handleExtend = async (id) => {
-    const newDueDate = window.prompt("Enter new due date (YYYY-MM-DD)");
-    if (!newDueDate) return;
-    const result = await dispatch(
-      extendDueDate({ id, newDueDate }),
-    );
+  const handleExtend = async (id, newDueDate) => {
+    if (!newDueDate) {
+      toast.error("Please select a new due date");
+      return false;
+    }
+
+    const result = await dispatch(extendDueDate({ id, newDueDate }));
     if (!result.error) {
       toast.success("Due date updated");
       refreshIssues();
-    } else {
-      toast.error(result.payload || "Failed to extend due date");
+      return true;
+    }
+    toast.error(result.payload || "Failed to extend due date");
+    return false;
+  };
+
+  const openIssueDetails = (issue) => {
+    setSelectedIssue(issue);
+  };
+
+  const closeIssueDetails = () => {
+    setSelectedIssue(null);
+    setIssueActionLoading(false);
+  };
+
+  const handleDetailReturn = async () => {
+    if (!selectedIssue) return;
+    setIssueActionLoading(true);
+    const success = await handleReturnBook(selectedIssue._id);
+    setIssueActionLoading(false);
+    if (success) {
+      closeIssueDetails();
+    }
+  };
+
+  const handleDetailExtend = async (newDueDate) => {
+    if (!selectedIssue) return;
+    setIssueActionLoading(true);
+    const success = await handleExtend(selectedIssue._id, newDueDate);
+    setIssueActionLoading(false);
+    if (success) {
+      closeIssueDetails();
     }
   };
 
@@ -171,9 +206,9 @@ export default function Issues() {
             <IssueCard
               key={issue._id}
               issue={issue}
-              onReturn={handleReturnBook}
-              onExtend={handleExtend}
+              onSelect={openIssueDetails}
               canManageIssues={canManageIssues}
+              showRecipient={canManageIssues}
             />
           ))}
         </div>
@@ -194,6 +229,17 @@ export default function Issues() {
             <IssueForm onSubmit={handleIssueBook} />
           </div>
         </Modal>
+      )}
+
+      {selectedIssue && (
+        <IssueDetailsModal
+          issue={selectedIssue}
+          onClose={closeIssueDetails}
+          canManageIssues={canManageIssues}
+          onReturn={canManageIssues ? handleDetailReturn : undefined}
+          onExtend={canManageIssues ? handleDetailExtend : undefined}
+          actionLoading={issueActionLoading}
+        />
       )}
     </>
   );

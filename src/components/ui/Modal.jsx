@@ -1,7 +1,13 @@
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
-export default function Modal({ children, onClose }) {
+export default function Modal({
+  children,
+  onClose,
+  position = "center",
+  contentClassName = "",
+  showCloseButton = true,
+}) {
   const modalRef = useRef(null);
 
   useEffect(() => {
@@ -17,20 +23,37 @@ export default function Modal({ children, onClose }) {
     };
   }, []);
 
+  const alignmentClasses =
+    position === "right"
+      ? "items-stretch justify-end"
+      : "items-center justify-center";
+
+  const wrapperClasses =
+    position === "right"
+      ? "relative w-full max-w-2xl h-full"
+      : "relative w-full max-w-4xl";
+
+  const contentSizingClasses =
+    position === "right" ? "h-full" : "max-h-[90vh]";
+
   return createPortal(
-    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm px-4 py-10 flex items-center justify-center ">
-      <div className="relative w-full max-w-4xl">
+    <div
+      className={`fixed inset-0 z-50 bg-black/40 backdrop-blur-sm px-4 py-10 flex ${alignmentClasses}`}
+    >
+      <div className={wrapperClasses}>
         <div
           ref={modalRef}
-          className="bg-white p-6 rounded-2xl shadow-2xl "
+          className={`bg-white p-6 rounded-2xl shadow-2xl overflow-y-auto ${contentSizingClasses} ${contentClassName}`}
         >
-          <button
-            onClick={onClose}
-            className="absolute top-3 right-4 text-xl text-gray-500 hover:text-gray-700"
-            aria-label="Close modal"
-          >
-            ✕
-          </button>
+          {showCloseButton && (
+            <button
+              onClick={onClose}
+              className="absolute top-3 right-4 text-xl text-gray-500 hover:text-gray-700"
+              aria-label="Close modal"
+            >
+              ✕
+            </button>
+          )}
           {children}
         </div>
       </div>

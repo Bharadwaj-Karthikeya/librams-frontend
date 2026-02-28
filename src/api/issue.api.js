@@ -17,3 +17,9 @@ export const fetchAllIssuesAPI = () =>
 
 export const fetchOverdueIssuesAPI = () =>
   api.get("/issues/overdue");
+
+export const fetchBookIssueHistoryAPI = (bookId) =>
+  api.get(`/issues/book/${bookId}`);
+
+export const fetchIssueDetailsAPI = (issueId) =>
+  api.get(`/issues/${issueId}`);

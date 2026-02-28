@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Layout from "../components/layout/Layout";
 import IssueCard from "../components/issue/IssueCard";
+import IssueDetailsModal from "../components/issue/IssueDetailsModal";
 import { fetchUserIssues } from "../store/slices/issueSlice";
 
 const STATUS_OPTIONS = [
@@ -15,6 +16,7 @@ export default function UserIssues() {
 	const dispatch = useDispatch();
 	const { issues, loading, error } = useSelector((state) => state.issues);
 	const [statusFilter, setStatusFilter] = useState("all");
+	const [selectedIssue, setSelectedIssue] = useState(null);
 
 	const refreshIssues = () => {
 		dispatch(fetchUserIssues());
@@ -31,6 +33,14 @@ export default function UserIssues() {
 		}
 		return issues.filter((issue) => issue.status === statusFilter);
 	}, [issues, statusFilter]);
+
+	const openIssueDetails = (issue) => {
+		setSelectedIssue(issue);
+	};
+
+	const closeIssueDetails = () => {
+		setSelectedIssue(null);
+	};
 
 	return (
 		<Layout>
@@ -71,10 +81,18 @@ export default function UserIssues() {
 
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 					{filteredIssues.map((issue) => (
-						<IssueCard key={issue._id} issue={issue} showRecipient={false} />
+						<IssueCard
+							key={issue._id}
+							issue={issue}
+							onSelect={openIssueDetails}
+							showRecipient={false}
+						/>
 					))}
 				</div>
 			</div>
+		{selectedIssue && (
+			<IssueDetailsModal issue={selectedIssue} onClose={closeIssueDetails} />
+		)}
 		</Layout>
 	);
 }

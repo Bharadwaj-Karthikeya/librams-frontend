@@ -118,6 +118,7 @@ export const updateBook = createAsyncThunk(
       const allowedFields = [
         "title",
         "author",
+        "publishedYear",
         "copies",
         "availableCopies",
         "category",
@@ -206,8 +207,19 @@ const booksSlice = createSlice({
         state.error = action.payload || "Failed to load books";
       })
 
+      .addCase(fetchBookById.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.selectedBook = null;
+      })
       .addCase(fetchBookById.fulfilled, (state, action) => {
+        state.loading = false;
         state.selectedBook = action.payload;
+      })
+      .addCase(fetchBookById.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to load book";
+        state.selectedBook = null;
       })
 
       .addCase(searchBooksByTerm.pending, (state, action) => {

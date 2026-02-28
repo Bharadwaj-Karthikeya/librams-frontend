@@ -1,45 +1,68 @@
 export default function IssueCard({
   issue,
-  onReturn,
-  onExtend,
+  onSelect,
   canManageIssues = false,
   showRecipient = true,
 }) {
-  const canActOnIssue = canManageIssues && issue.status === "issued";
+  const formatDate = (value) => {
+    if (!value) return "—";
+    return new Date(value).toLocaleDateString();
+  };
+
+  const handleSelect = () => {
+    if (typeof onSelect === "function") {
+      onSelect(issue);
+    }
+  };
+
+  const statusLabel = issue.status?.toUpperCase();
 
   return (
-    <div className="border p-4 rounded-lg">
-      <h3 className="font-semibold">{issue.book?.title}</h3>
-      {showRecipient && (
-        <p className="text-sm text-gray-600">
-          Issued To: {issue.toUser?.email}
-        </p>
-      )}
-      <p className="text-sm">
-        Due: {new Date(issue.dueDate).toLocaleDateString()}
-      </p>
-
-      <p className="text-xs mt-1 uppercase tracking-wide text-gray-500">
-        Status: {issue.status}
-      </p>
-
-      {canActOnIssue && (
-        <div className="flex gap-3 mt-3">
-          <button
-            onClick={() => onReturn(issue._id)}
-            className="text-green-600 text-sm"
-          >
-            Return
-          </button>
-
-          <button
-            onClick={() => onExtend(issue._id)}
-            className="text-yellow-600 text-sm"
-          >
-            Extend
-          </button>
+    <div
+      className="border p-4 rounded-2xl shadow-sm hover:shadow-md transition cursor-pointer focus-within:ring-2 focus-within:ring-blue-200"
+      role="button"
+      tabIndex={0}
+      onClick={handleSelect}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          handleSelect();
+        }
+      }}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h3 className="font-semibold text-gray-900">{issue.book?.title}</h3>
+          {showRecipient && (
+            <p className="text-sm text-gray-600">
+              Issued To: {issue.toUser?.email}
+            </p>
+          )}
+          <p className="text-sm text-gray-700">
+            Due {formatDate(issue.dueDate)}
+          </p>
         </div>
-      )}
+        <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+          {statusLabel}
+        </span>
+      </div>
+
+      <p className="text-xs text-gray-500 mt-2">
+        Issued {formatDate(issue.issueDate)}
+      </p>
+
+      <div className="mt-4 flex justify-end">
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            handleSelect();
+          }}
+          className="text-sm font-semibold text-blue-700 hover:text-blue-900"
+        >
+          View details
+        </button>
+      </div>
     </div>
   );
 }

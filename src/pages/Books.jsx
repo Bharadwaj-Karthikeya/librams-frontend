@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
+import Layout from "../components/layout/Layout";
+import Modal from "../components/ui/Modal";
+import ConfirmModal from "../components/ui/ConfirmModal";
+import BookForm from "../components/books/BookForm";
+import BookDetailsSummary from "../components/books/BookDetailsSummary";
 import {
   fetchBooks,
   createBook,
@@ -9,17 +16,16 @@ import {
   searchBooksByTerm,
   fetchBooksByCategory,
 } from "../store/slices/booksSlice";
-import Layout from "../components/layout/Layout";
-import Modal from "../components/ui/Modal";
-import ConfirmModal from "../components/ui/ConfirmModal";
-import BookForm from "../components/books/BookForm";
-import { Link } from "react-router-dom";
-import toast from "react-hot-toast";
+import {
+  fetchBookIssueHistory,
+  fetchIssueDetails,
+} from "../store/slices/issueSlice";
 
 export default function Books() {
   const dispatch = useDispatch();
   const { books, allBooks, loading, error } = useSelector((state) => state.books);
   const { user } = useSelector((state) => state.auth);
+  const canManageBooks = user?.role === "admin" || user?.role === "staff";
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -27,6 +33,13 @@ export default function Books() {
   const [modalState, setModalState] = useState({ type: null, book: null });
   const [isEditing, setIsEditing] = useState(false);
   const [confirmState, setConfirmState] = useState(null);
+  const [showHistoryPanel, setShowHistoryPanel] = useState(false);
+  const [historyEntries, setHistoryEntries] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState(null);
+  const [historyDetail, setHistoryDetail] = useState(null);
+  const [historyDetailLoading, setHistoryDetailLoading] = useState(false);
+  const [historyDetailId, setHistoryDetailId] = useState(null);
   const lastSearchTerm = useRef("");
 
   useEffect(() => {
@@ -48,10 +61,7 @@ export default function Books() {
       return;
     }
 
-    if (
-      debouncedSearch.length === 0 &&
-      lastSearchTerm.current.length >= 1
-    ) {
+    if (debouncedSearch.length === 0 && lastSearchTerm.current.length >= 1) {
       lastSearchTerm.current = "";
       if (selectedCategory === "all") {
         dispatch(fetchBooks());
@@ -76,15 +86,62 @@ export default function Books() {
     setIsEditing(type === "create");
   };
 
+  const closeHistoryPanel = () => {
+    setShowHistoryPanel(false);
+    setHistoryEntries([]);
+    setHistoryError(null);
+    setHistoryDetail(null);
+    setHistoryDetailId(null);
+  };
+
   const closeModal = () => {
     setModalState({ type: null, book: null });
     setIsEditing(false);
+    closeHistoryPanel();
   };
 
-  /* ---------------- CREATE ---------------- */
+  const loadIssueHistory = (bookId) => {
+    if (!bookId) return;
+    setHistoryLoading(true);
+    setHistoryError(null);
+    dispatch(fetchBookIssueHistory(bookId))
+      .unwrap()
+      .then((data) => {
+        setHistoryEntries(data?.history || []);
+      })
+      .catch(() => {
+        setHistoryEntries([]);
+        setHistoryError("Unable to load issue history right now.");
+      })
+      .finally(() => {
+        setHistoryLoading(false);
+      });
+  };
+
+  const openHistoryPanel = () => {
+    if (!modalState.book || !canManageBooks) return;
+    setShowHistoryPanel(true);
+    loadIssueHistory(modalState.book._id);
+  };
+
+  const viewHistoryDetail = async (issueId) => {
+    if (!issueId) return;
+    setHistoryDetailLoading(true);
+    setHistoryDetailId(issueId);
+    try {
+      const data = await dispatch(fetchIssueDetails(issueId)).unwrap();
+      setHistoryDetail(data.issue || null);
+    } catch (err) {
+      setHistoryDetail(null);
+      toast.error("Unable to load issue details right now.");
+    } finally {
+      setHistoryDetailLoading(false);
+      setHistoryDetailId(null);
+    }
+  };
+
   const handleCreate = async (data) => {
     const result = await dispatch(createBook(data));
-
     if (!result.error) {
       toast.success("Book created");
       closeModal();
@@ -93,7 +150,6 @@ export default function Books() {
     }
   };
 
-  /* ---------------- EDIT ---------------- */
   const handleEdit = async (data) => {
     if (!modalState.book) return;
     const result = await dispatch(
@@ -126,12 +182,10 @@ export default function Books() {
   return (
     <Layout>
       <div className="bg-white p-6 rounded-xl shadow-sm">
-        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">Books</h2>
 
-          {(user?.role === "admin" ||
-            user?.role === "staff") && (
+          {canManageBooks && (
             <button
               onClick={() => openModal("create")}
               className="bg-blue-600 text-white px-4 py-2 rounded-md"
@@ -141,7 +195,6 @@ export default function Books() {
           )}
         </div>
 
-        {/* Search */}
         <div className="mb-6">
           <input
             type="text"
@@ -150,12 +203,9 @@ export default function Books() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <p className="text-xs text-gray-500 mt-1">
-            Server search starts after a short pause.
-          </p>
+          <p className="text-xs text-gray-500 mt-1">Server search starts after a short pause.</p>
         </div>
 
-        {/* Categories */}
         {categories.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-6">
             <button
@@ -176,14 +226,10 @@ export default function Books() {
           </div>
         )}
 
-        {/* States */}
         {loading && <p>Loading books...</p>}
         {error && <p className="text-red-500">{error}</p>}
-        {!loading && books.length === 0 && (
-          <p>No books found.</p>
-        )}
+        {!loading && books.length === 0 && <p>No books found.</p>}
 
-        {/* Books Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {books.map((book) => (
             <div
@@ -199,24 +245,17 @@ export default function Books() {
               <div className="flex-1 flex flex-col justify-between">
                 <div>
                   <Link to={`/books/${book._id}`}>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {book.title}
-                    </h3>
+                    <h3 className="text-lg font-semibold text-gray-900">{book.title}</h3>
                   </Link>
                   <p className="text-sm text-gray-600">{book.author}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Category: {book.category || "—"}
-                  </p>
-                  <p className="text-sm mt-2 font-medium">
-                    Available Copies: {book.availableCopies}
-                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Category: {book.category || "—"}</p>
+                  <p className="text-sm mt-2 font-medium">Available Copies: {book.availableCopies}</p>
                   <div className="flex flex-wrap gap-2 mt-3">
                     {!book.isActive && (
                       <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full border border-gray-200">
                         Inactive
                       </span>
                     )}
-
                     {!book.isAvailableforIssue && (
                       <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full border border-yellow-200">
                         Not Issuable
@@ -237,7 +276,6 @@ export default function Books() {
         </div>
       </div>
 
-      {/* FORM MODAL */}
       {modalState.type && (
         <Modal onClose={closeModal}>
           <div className="w-full">
@@ -250,11 +288,18 @@ export default function Books() {
                       ? "Edit Book"
                       : "Book Details"}
                 </h2>
-                
               </div>
 
               <div className="flex items-center gap-3">
-                {modalState.type === "details" && (user?.role === "admin" || user?.role === "staff") && (
+                {modalState.type === "details" && canManageBooks && (
+                  <button
+                    onClick={openHistoryPanel}
+                    className="px-4 py-2 text-sm rounded-md border border-blue-200 text-blue-700 hover:bg-blue-50"
+                  >
+                    View issue history
+                  </button>
+                )}
+                {modalState.type === "details" && canManageBooks && (
                   <button
                     onClick={() => setIsEditing((prev) => !prev)}
                     className="px-4 py-2 text-sm rounded-md border border-blue-300 text-blue-700 hover:bg-blue-50"
@@ -265,14 +310,18 @@ export default function Books() {
               </div>
             </div>
 
-            <BookForm
-              initialData={modalState.book}
-              onSubmit={modalState.type === "create" ? handleCreate : handleEdit}
-              loading={loading}
-              readOnly={modalState.type === "details" && !isEditing}
-            />
+            {modalState.type === "details" && !isEditing ? (
+              <BookDetailsSummary book={modalState.book} />
+            ) : (
+              <BookForm
+                initialData={modalState.book}
+                onSubmit={modalState.type === "create" ? handleCreate : handleEdit}
+                loading={loading}
+                readOnly={modalState.type === "details" && !isEditing}
+              />
+            )}
 
-            {modalState.type === "details" && (user?.role === "admin" || user?.role === "staff") && (
+            {modalState.type === "details" && canManageBooks && (
               <div className="flex flex-wrap gap-3 mt-6">
                 <button
                   onClick={() =>
@@ -305,7 +354,6 @@ export default function Books() {
         </Modal>
       )}
 
-      {/* CONFIRM MODAL */}
       {confirmState && (
         <ConfirmModal
           title={
@@ -324,14 +372,10 @@ export default function Books() {
             let result;
 
             if (confirmState.type === "soft") {
-              result = await dispatch(
-                deleteBook(confirmState.bookId)
-              );
+              result = await dispatch(deleteBook(confirmState.bookId));
             } else {
               result = await dispatch(
-                deleteBookPermanently(
-                  confirmState.bookId
-                )
+                deleteBookPermanently(confirmState.bookId)
               );
             }
 
@@ -345,6 +389,117 @@ export default function Books() {
             setConfirmState(null);
           }}
         />
+      )}
+
+      {showHistoryPanel && modalState.book && canManageBooks && (
+        <Modal
+          onClose={closeHistoryPanel}
+          position="right"
+          contentClassName="max-w-xl"
+          showCloseButton={false}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-xl font-semibold">Issue history</h3>
+              <p className="text-sm text-gray-500">{modalState.book.title}</p>
+            </div>
+            <button
+              onClick={closeHistoryPanel}
+              className="text-gray-500 hover:text-gray-700 text-sm"
+            >
+              Close
+            </button>
+          </div>
+
+          {historyLoading ? (
+            <p>Loading issue history...</p>
+          ) : historyError ? (
+            <p className="text-sm text-red-500">{historyError}</p>
+          ) : historyEntries.length === 0 ? (
+            <p className="text-sm text-gray-500">No issues recorded for this book yet.</p>
+          ) : (
+            <div className="space-y-4 overflow-y-auto pr-2 max-h-[65vh]">
+              {historyEntries.map((issue) => (
+                <div key={issue._id} className="border rounded-xl p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">
+                        {issue.toUser?.name || issue.toUser?.email}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Issued on {new Date(issue.issueDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <span
+                      className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                        issue.status === "issued"
+                          ? "bg-green-50 text-green-700 border border-green-100"
+                          : issue.status === "overdue"
+                            ? "bg-yellow-50 text-yellow-700 border border-yellow-100"
+                            : "bg-gray-100 text-gray-600 border border-gray-200"
+                      }`}
+                    >
+                      {issue.status}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-700">
+                    Due {new Date(issue.dueDate).toLocaleDateString()}
+                  </p>
+                  {issue.returnedDate && (
+                    <p className="text-sm text-gray-700">
+                      Returned {new Date(issue.returnedDate).toLocaleDateString()}
+                    </p>
+                  )}
+                  <button
+                    onClick={() => viewHistoryDetail(issue._id)}
+                    className="mt-3 text-sm font-medium text-blue-600 hover:text-blue-800"
+                    disabled={historyDetailLoading && historyDetailId === issue._id}
+                  >
+                    {historyDetailLoading && historyDetailId === issue._id
+                      ? "Loading..."
+                      : "View details"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {historyDetail && (
+            <div className="mt-6 border-t border-blue-100 pt-4">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-lg font-semibold text-blue-900">Issue detail</h4>
+                <button
+                  onClick={() => setHistoryDetail(null)}
+                  className="text-sm text-blue-700 hover:text-blue-900"
+                >
+                  Clear
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-900">
+                <p>
+                  Borrower: {historyDetail.toUser?.name || historyDetail.toUser?.email || "—"}
+                </p>
+                <p>Status: {historyDetail.status}</p>
+                <p>
+                  Issued: {historyDetail.issueDate
+                    ? new Date(historyDetail.issueDate).toLocaleString()
+                    : "—"}
+                </p>
+                <p>
+                  Due: {historyDetail.dueDate
+                    ? new Date(historyDetail.dueDate).toLocaleString()
+                    : "—"}
+                </p>
+                <p>
+                  Processed by: {historyDetail.byUser?.name || historyDetail.byUser?.email || "—"}
+                </p>
+                {historyDetail.returnedDate && (
+                  <p>Returned {new Date(historyDetail.returnedDate).toLocaleString()}</p>
+                )}
+              </div>
+            </div>
+          )}
+        </Modal>
       )}
     </Layout>
   );
