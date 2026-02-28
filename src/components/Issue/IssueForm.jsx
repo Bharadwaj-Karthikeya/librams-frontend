@@ -2,7 +2,7 @@ import { useState } from "react";
 
 export default function IssueForm({ onSubmit }) {
   const [formData, setFormData] = useState({
-    bookId: "",
+    isbn: "",
     toUserEmail: "",
     dueDate: "",
   });
@@ -19,8 +19,8 @@ export default function IssueForm({ onSubmit }) {
       className="space-y-4"
     >
       <input
-        name="bookId"
-        placeholder="Book ID"
+        name="isbn"
+        placeholder="Book ISBN"
         onChange={handleChange}
         className="w-full border p-2 rounded"
       />
