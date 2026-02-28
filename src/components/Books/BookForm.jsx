@@ -13,6 +13,55 @@ const defaultState = {
   isAvailableforIssue: true,
 };
 
+const numericFields = new Set(["copies", "availableCopies", "publishedYear"]);
+
+const normalizeForComparison = (value, key) => {
+  if (value === undefined || value === null || value === "") {
+    return "";
+  }
+
+  if (numericFields.has(key)) {
+    const numericValue = Number(value);
+    return Number.isNaN(numericValue) ? "" : numericValue;
+  }
+
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    return value.trim();
+  }
+
+  return value;
+};
+
+const buildDiffPayload = (payload, initialData) => {
+  if (!initialData) {
+    return payload;
+  }
+
+  return Object.entries(payload).reduce((acc, [key, value]) => {
+    if (value === undefined) {
+      return acc;
+    }
+
+    if (key === "bookCoverFile") {
+      acc[key] = value;
+      return acc;
+    }
+
+    const previousValue = normalizeForComparison(initialData?.[key], key);
+    const nextValue = normalizeForComparison(value, key);
+
+    if (previousValue !== nextValue) {
+      acc[key] = value;
+    }
+
+    return acc;
+  }, {});
+};
+
 export default function BookForm({
   onSubmit,
   initialData,
@@ -137,7 +186,13 @@ export default function BookForm({
         if (coverFile) {
           payload.bookCoverFile = coverFile;
         }
-        onSubmit(payload);
+        const finalPayload = buildDiffPayload(payload, initialData);
+
+        if (initialData && Object.keys(finalPayload).length === 0) {
+          return;
+        }
+
+        onSubmit(finalPayload);
       }}
       className="flex flex-col gap-6 max-h-[80vh] overflow-y-auto pr-2"
     >

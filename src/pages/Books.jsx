@@ -240,8 +240,8 @@ export default function Books() {
       {/* FORM MODAL */}
       {modalState.type && (
         <Modal onClose={closeModal}>
-          <div className="w-full ">
-            <div className="flex flex-wrap items-center justify-between gap-3 ">
+          <div className="w-full">
+            <div className="flex flex-wrap items-center justify-between gap-3 w-[95%] mx-4 my-2">
               <div>
                 <h2 className="text-xl font-semibold">
                   {modalState.type === "create"
@@ -250,9 +250,7 @@ export default function Books() {
                       ? "Edit Book"
                       : "Book Details"}
                 </h2>
-                {modalState.book && (
-                  <p className="text-sm text-gray-500">ISBN: {modalState.book.isbn}</p>
-                )}
+                
               </div>
 
               <div className="flex items-center gap-3">
@@ -264,12 +262,6 @@ export default function Books() {
                     {isEditing ? "Cancel Editing" : "Edit Book"}
                   </button>
                 )}
-                <button
-                  onClick={closeModal}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  Close
-                </button>
               </div>
             </div>
 
