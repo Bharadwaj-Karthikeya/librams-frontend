@@ -1,5 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { loginUser, registerUser, getProfile } from "../../api/auth.api";
+import {
+  loginUser,
+  registerUser,
+  getProfile,
+  updateProfileRequest,
+  deleteUserAccountRequest,
+  resetUserPasswordRequest,
+} from "../../api/auth.api";
 
 /*
 -----------------------------------
@@ -52,11 +59,49 @@ export const fetchProfile = createAsyncThunk(
   }
 );
 
+export const updateProfile = createAsyncThunk(
+  "auth/updateProfile",
+  async (formData, { rejectWithValue }) => {
+    try {
+      const response = await updateProfileRequest(formData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error?.response?.data?.message || "Profile update failed");
+    }
+  }
+);
+
+export const deleteUserAccount = createAsyncThunk(
+  "auth/deleteUserAccount",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await deleteUserAccountRequest(payload);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error?.response?.data?.message || "Delete request failed");
+    }
+  }
+);
+
+export const resetUserPassword = createAsyncThunk(
+  "auth/resetUserPassword",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await resetUserPasswordRequest(payload);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error?.response?.data?.message || "Password reset failed");
+    }
+  }
+);
+
 const initialState = {
   user: JSON.parse(localStorage.getItem("user")) || null,
   token: localStorage.getItem("token") || null,
   loading: false,
   error: null,
+  profileUpdating: false,
+  adminActionLoading: false,
 };
 
 const authSlice = createSlice({
@@ -117,6 +162,56 @@ const authSlice = createSlice({
       })
       .addCase(fetchProfile.rejected, (state, action) => {
         state.loading = false;
+        state.error = action.payload;
+      })
+
+      // UPDATE PROFILE
+      .addCase(updateProfile.pending, (state) => {
+        state.profileUpdating = true;
+        state.error = null;
+      })
+      .addCase(updateProfile.fulfilled, (state, action) => {
+        state.profileUpdating = false;
+        if (action.payload?.user) {
+          state.user = action.payload.user;
+          localStorage.setItem("user", JSON.stringify(action.payload.user));
+        }
+      })
+      .addCase(updateProfile.rejected, (state, action) => {
+        state.profileUpdating = false;
+        state.error = action.payload;
+      })
+
+      // DELETE USER ACCOUNT
+      .addCase(deleteUserAccount.pending, (state) => {
+        state.adminActionLoading = true;
+        state.error = null;
+      })
+      .addCase(deleteUserAccount.fulfilled, (state, action) => {
+        state.adminActionLoading = false;
+        const deletedUserId = action.meta?.arg?.userId;
+        if (deletedUserId && state.user?._id === deletedUserId) {
+          state.user = null;
+          state.token = null;
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+        }
+      })
+      .addCase(deleteUserAccount.rejected, (state, action) => {
+        state.adminActionLoading = false;
+        state.error = action.payload;
+      })
+
+      // RESET PASSWORD
+      .addCase(resetUserPassword.pending, (state) => {
+        state.adminActionLoading = true;
+        state.error = null;
+      })
+      .addCase(resetUserPassword.fulfilled, (state) => {
+        state.adminActionLoading = false;
+      })
+      .addCase(resetUserPassword.rejected, (state, action) => {
+        state.adminActionLoading = false;
         state.error = action.payload;
       });
   },
