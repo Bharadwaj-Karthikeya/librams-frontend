@@ -1,4 +1,4 @@
-import IssueCard from "./IssueCard";
+import IssueCard from "./IssueCard.jsx";
 
 export default function IssueList({ issues, onSelect, showRecipient }) {
 	if (!issues?.length) {

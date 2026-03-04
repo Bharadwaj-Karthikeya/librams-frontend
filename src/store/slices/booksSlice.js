@@ -8,7 +8,7 @@ import {
   deleteBookPermanently as deleteBookPermanentlyAPI,
   searchBooks as searchBooksAPI,
   getBooksByCategory as getBooksByCategoryAPI,
-} from "../../api/books.api";
+} from "../../api/books.api.js";
 
 /* FETCH ALL */
 export const fetchBooks = createAsyncThunk(

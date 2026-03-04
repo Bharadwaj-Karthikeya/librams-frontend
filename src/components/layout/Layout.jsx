@@ -1,8 +1,8 @@
 import { useDispatch } from "react-redux";
-import { logout } from "../../store/slices/authSlice";
+import { logout } from "../../store/slices/authSlice.js";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "./Sidebar";
-import useAuth from "../../hooks/useAuth";
+import Sidebar from "./Sidebar.jsx";
+import useAuth from "../../hooks/useAuth.jsx";
 
 export default function Layout({ children }) {
   const { user } = useAuth();

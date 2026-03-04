@@ -1,28 +1,28 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
-import Layout from "../components/layout/Layout";
-import Modal from "../components/ui/Modal";
-import ConfirmModal from "../components/ui/ConfirmModal";
-import Button from "../components/ui/Button";
-import Input from "../components/ui/Input";
-import FilterPill from "../components/ui/FilterPill";
+import Layout from "../components/layout/Layout.jsx";
+import Modal from "../components/ui/Modal.jsx";
+import ConfirmModal from "../components/ui/ConfirmModal.jsx";
+import Button from "../components/ui/Button.jsx";
+import Input from "../components/ui/Input.jsx";
+import FilterPill from "../components/ui/FilterPill.jsx";
 import { Plus } from "lucide-react";
-import BookForm from "../components/books/BookForm";
-import BookDetailsSummary from "../components/books/BookDetailsSummary";
-import BookList from "../components/books/BookList";
+import BookForm from "../components/books/BookForm.jsx";
+import BookDetailsSummary from "../components/books/BookDetailsSummary.jsx";
+import BookList from "../components/books/BookList.jsx";
 import {
   fetchBooks,
   createBook,
   updateBook,
   deleteBookPermanently,
   searchBooksByTerm,
-} from "../store/slices/booksSlice";
+} from "../store/slices/booksSlice.js";
 import {
   fetchBookIssueHistory,
   fetchIssueDetails,
-} from "../store/slices/issueSlice";
-import useAuth from "../hooks/useAuth";
+} from "../store/slices/issueSlice.js";
+import useAuth from "../hooks/useAuth.js";
 
 const splitCategories = (value) => {
   if (!value) return [];

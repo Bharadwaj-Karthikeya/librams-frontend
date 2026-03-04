@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
-import Layout from "../components/layout/Layout";
-import Button from "../components/ui/Button";
-import Input from "../components/ui/Input";
-import Select from "../components/ui/Select";
-import Card from "../components/ui/Card";
-import useAuth from "../hooks/useAuth";
+import Layout from "../components/layout/Layout.jsx";
+import Button from "../components/ui/Button.jsx";
+import Input from "../components/ui/Input.jsx";
+import Select from "../components/ui/Select.jsx";
+import Card from "../components/ui/Card.jsx";
+import useAuth from "../hooks/useAuth.js";
 import { KeyRound, Pencil, Save } from "lucide-react";
 import {
 	fetchProfile,
@@ -14,7 +14,7 @@ import {
 	resetUserPassword,
 	changePassword,
 	updateUserRole,
-} from "../store/slices/authSlice";
+} from "../store/slices/authSlice.js";
 
 export default function Profile() {
 	const dispatch = useDispatch();

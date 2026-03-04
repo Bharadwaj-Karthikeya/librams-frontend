@@ -1,5 +1,5 @@
-import { formatDate } from "../../utils/formatDate";
-import Button from "../ui/Button";
+import { formatDate } from "../../utils/formatDate.js";
+import Button from "../ui/Button.jsx";
 
 export default function IssueCard({
   issue,

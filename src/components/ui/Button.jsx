@@ -1,4 +1,4 @@
-import { classNames } from "../../utils/helpers";
+import { classNames } from "../../utils/helpers.js";
 
 const VARIANT_CLASSES = {
 	primary: "bg-[var(--accent)] text-white hover:bg-[#1642b6]",

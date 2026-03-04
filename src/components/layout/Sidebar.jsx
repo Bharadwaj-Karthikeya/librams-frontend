@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import Button from "../ui/Button";
+import Button from "../ui/Button.jsx";
 
 export default function Sidebar({ user, onLogout }) {
 	return (
