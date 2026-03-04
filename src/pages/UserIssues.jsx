@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Layout from "../components/layout/Layout.jsx";
-import IssueDetailsModal from "../components/issue/IssueDetailsModal.jsx";
+import IssueDetailsModal from "../components/Issue/IssueDetailsModal.jsx";
 import { fetchUserIssues } from "../store/slices/issueSlice.js";
 import Button from "../components/ui/Button.jsx";
-import IssueList from "../components/issue/IssueList.jsx";
+import IssueList from "../components/Issue/IssueList.jsx";
 import FilterPill from "../components/ui/FilterPill.jsx";
 
 const STATUS_OPTIONS = [
