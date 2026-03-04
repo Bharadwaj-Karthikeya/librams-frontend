@@ -8,9 +8,9 @@ import Button from "../components/ui/Button.jsx";
 import Input from "../components/ui/Input.jsx";
 import FilterPill from "../components/ui/FilterPill.jsx";
 import { Plus } from "lucide-react";
-import BookForm from "../components/books/BookForm.jsx";
-import BookDetailsSummary from "../components/books/BookDetailsSummary.jsx";
-import BookList from "../components/books/BookList.jsx";
+import BookForm from "../components/Books/BookForm.jsx";
+import BookDetailsSummary from "../components/Books/BookDetailsSummary.jsx";
+import BookList from "../components/Books/BookList.jsx";
 import {
   fetchBooks,
   createBook,
