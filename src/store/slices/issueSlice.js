@@ -8,7 +8,7 @@ import {
   fetchOverdueIssuesAPI,
   fetchBookIssueHistoryAPI,
   fetchIssueDetailsAPI,
-} from "../../api/issue.api";
+} from "../../api/issue.api.js";
 
 export const issueBook = createAsyncThunk(
   "issues/issueBook",

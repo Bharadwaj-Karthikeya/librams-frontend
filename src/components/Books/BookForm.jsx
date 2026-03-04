@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import Input from "../ui/Input";
-import Textarea from "../ui/Textarea";
-import Button from "../ui/Button";
+import Input from "../ui/Input.jsx";
+import Textarea from "../ui/Textarea.jsx";
+import Button from "../ui/Button.jsx";
 
 const defaultState = {
   title: "",

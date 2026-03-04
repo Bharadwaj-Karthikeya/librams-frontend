@@ -1,4 +1,4 @@
-import { classNames } from "../../utils/helpers";
+import { classNames } from "../../utils/helpers.js";
 
 export default function Select({
 	id,

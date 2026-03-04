@@ -2,18 +2,18 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
-import Layout from "../components/layout/Layout";
-import { formatDate } from "../utils/formatDate";
-import useAuth from "../hooks/useAuth";
-import Button from "../components/ui/Button";
-import Card from "../components/ui/Card";
-import Badge from "../components/ui/Badge";
-import { fetchBookById } from "../store/slices/booksSlice";
+import Layout from "../components/layout/Layout.jsx";
+import { formatDate } from "../utils/formatDate.js";
+import useAuth from "../hooks/useAuth.js";
+import Button from "../components/ui/Button.jsx";
+import Card from "../components/ui/Card.jsx";
+import Badge from "../components/ui/Badge.jsx";
+import { fetchBookById } from "../store/slices/booksSlice.js";
 import {
   fetchBookIssueHistory,
   fetchIssueDetails,
-} from "../store/slices/issueSlice";
-import Modal from "../components/ui/Modal";
+} from "../store/slices/issueSlice.js";
+import Modal from "../components/ui/Modal.jsx";
 
 export default function BookDetails() {
   const { id } = useParams();

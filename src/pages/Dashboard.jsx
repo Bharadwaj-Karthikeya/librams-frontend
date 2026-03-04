@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import Layout from "../components/layout/Layout";
-import Button from "../components/ui/Button";
+import Layout from "../components/layout/Layout.jsx";
+import Button from "../components/ui/Button.jsx";
 import {
   Bell,
   BookOpenCheck,
@@ -12,10 +12,10 @@ import {
   Clock,
   AlertTriangle,
 } from "lucide-react";
-import useAuth from "../hooks/useAuth";
-import { fetchAllIssues, fetchUserIssues } from "../store/slices/issueSlice";
-import { fetchBooks } from "../store/slices/booksSlice";
-import { formatDate } from "../utils/formatDate";
+import useAuth from "../hooks/useAuth.js";
+import { fetchAllIssues, fetchUserIssues } from "../store/slices/issueSlice.js";
+import { fetchBooks } from "../store/slices/booksSlice.js";
+import { formatDate } from "../utils/formatDate.js";
 
 export default function Dashboard() {
   const { issues, loading, error } = useSelector((state) => state.issues);

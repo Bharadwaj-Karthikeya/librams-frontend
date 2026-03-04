@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
-import Modal from "../ui/Modal";
-import { formatDate } from "../../utils/formatDate";
-import Badge from "../ui/Badge";
-import Button from "../ui/Button";
-import Input from "../ui/Input";
+import Modal from "../ui/Modal.jsx";
+import { formatDate } from "../../utils/formatDate.js";
+import Badge from "../ui/Badge.jsx";
+import Button from "../ui/Button.jsx";
+import Input from "../ui/Input.jsx";
 
 export default function IssueDetailsModal({
   issue,

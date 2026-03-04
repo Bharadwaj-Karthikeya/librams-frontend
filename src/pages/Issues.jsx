@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
-import Layout from "../components/layout/Layout";
-import IssueForm from "../components/issue/IssueForm";
-import IssueDetailsModal from "../components/issue/IssueDetailsModal";
-import Modal from "../components/ui/Modal";
-import Button from "../components/ui/Button";
-import IssueList from "../components/issue/IssueList";
-import useAuth from "../hooks/useAuth";
-import FilterPill from "../components/ui/FilterPill";
+import Layout from "../components/layout/Layout.jsx";
+import IssueForm from "../components/issue/IssueForm.jsx";
+import IssueDetailsModal from "../components/issue/IssueDetailsModal.jsx";
+import Modal from "../components/ui/Modal.jsx";
+import Button from "../components/ui/Button.jsx";
+import IssueList from "../components/issue/IssueList.jsx";
+import useAuth from "../hooks/useAuth.js";
+import FilterPill from "../components/ui/FilterPill.jsx";
 import { BookPlus } from "lucide-react";
 import {
   issueBook,
@@ -17,7 +17,7 @@ import {
   fetchUserIssues,
   fetchAllIssues,
   fetchOverdueIssues,
-} from "../store/slices/issueSlice";
+} from "../store/slices/issueSlice.js";
 
 export default function Issues() {
   const dispatch = useDispatch();

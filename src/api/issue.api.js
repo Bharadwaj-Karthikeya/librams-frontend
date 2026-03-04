@@ -1,4 +1,4 @@
-import api from "./axios";
+import api from "./axios.js";
 
 export const issueBookAPI = (data) =>
   api.post("/issues/issue", data);

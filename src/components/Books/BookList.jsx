@@ -1,4 +1,4 @@
-import BookCard from "./BookCard";
+import BookCard from "./BookCard.jsx";
 
 export default function BookList({ books, onView }) {
 	if (!books?.length) {

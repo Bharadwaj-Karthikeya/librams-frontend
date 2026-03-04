@@ -8,7 +8,7 @@ import {
   resetUserPasswordRequest,
   changePasswordRequest,
   updateUserRoleRequest,
-} from "../../api/auth.api";
+} from "../../api/auth.api.js";
 
 /*
 -----------------------------------
