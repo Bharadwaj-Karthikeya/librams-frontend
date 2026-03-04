@@ -1,22 +1,27 @@
 import { useMemo } from "react";
+import Badge from "../ui/Badge";
+import Button from "../ui/Button";
 
-export default function BookDetailsSummary({ book }) {
+export default function BookDetailsSummary({
+  book,
+  onEdit,
+  onViewHistory,
+  onDeletePermanent,
+  canManageBooks,
+  canDelete,
+}) {
   const statusBadges = useMemo(() => {
     if (!book) return [];
     return [
       {
         key: "active",
         label: book.isActive ? "Active" : "Inactive",
-        classes: book.isActive
-          ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-          : "bg-gray-100 text-gray-600 border border-gray-200",
+        variant: book.isActive ? "success" : "neutral",
       },
       {
         key: "issuable",
         label: book.isAvailableforIssue ? "Available for issue" : "Not issuable",
-        classes: book.isAvailableforIssue
-          ? "bg-blue-50 text-blue-700 border border-blue-100"
-          : "bg-yellow-50 text-yellow-700 border border-yellow-200",
+        variant: book.isAvailableforIssue ? "info" : "warning",
       },
     ];
   }, [book]);
@@ -39,31 +44,28 @@ export default function BookDetailsSummary({ book }) {
     <div className="space-y-6">
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="flex-1">
-          <p className="text-xs uppercase tracking-wide text-gray-500">
-            ISBN {book.isbn}
-          </p>
-          <h2 className="text-2xl font-semibold text-gray-900 mt-1">
+          <h2 className="text-2xl font-semibold text-[var(--text-strong)] mt-2">
             {book.title}
           </h2>
-          <p className="text-base text-gray-600 mb-3">{book.author}</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+            ISBN {book.isbn}
+          </p>
+          <p className="text-base text-[var(--text-muted)] mb-3">{book.author}</p>
 
           <div className="flex flex-wrap gap-2">
             {statusBadges.map((badge) => (
-              <span
-                key={badge.key}
-                className={`text-xs font-semibold px-3 py-1 rounded-full ${badge.classes}`}
-              >
+              <Badge key={badge.key} variant={badge.variant}>
                 {badge.label}
-              </span>
+              </Badge>
             ))}
           </div>
 
           {book.description && (
             <section className="mt-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-1">
+              <h3 className="text-sm font-semibold text-[var(--text-strong)] mb-1">
                 Description
               </h3>
-              <p className="text-gray-700 leading-relaxed text-sm">
+              <p className="text-[var(--text-muted)] leading-relaxed text-sm">
                 {book.description}
               </p>
             </section>
@@ -75,10 +77,10 @@ export default function BookDetailsSummary({ book }) {
             <img
               src={book.bookCover}
               alt={`${book.title} cover`}
-              className="w-full h-72 rounded-xl object-cover border border-gray-100"
+              className="w-full h-72 rounded-xl object-cover border border-[var(--line)]"
             />
           ) : (
-            <div className="w-full h-72 rounded-xl border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-sm">
+            <div className="w-full h-72 rounded-xl border border-dashed border-[var(--line)] flex items-center justify-center text-[var(--text-muted)] text-sm">
               No cover available
             </div>
           )}
@@ -89,17 +91,40 @@ export default function BookDetailsSummary({ book }) {
         {metadata.map((item) => (
           <div
             key={item.label}
-            className="border border-gray-100 rounded-xl p-4 bg-gray-50"
+            className="border border-[var(--line)] rounded-xl p-4 bg-[var(--surface-elevated)]"
           >
-            <p className="text-xs uppercase tracking-wide text-gray-500">
+            <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
               {item.label}
             </p>
-            <p className="text-base font-semibold text-gray-900">
+            <p className="text-base font-semibold text-[var(--text-strong)]">
               {item.value}
             </p>
           </div>
         ))}
       </div>
+
+      {(onEdit || onViewHistory || (canManageBooks && canDelete && onDeletePermanent)) && (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--line)] pt-4">
+          <div className="flex flex-wrap gap-3">
+            {onEdit && (
+              <Button variant="outline" size="sm" onClick={onEdit}>
+                Edit book
+              </Button>
+            )}
+            {onViewHistory && (
+              <Button variant="ghost" size="sm" onClick={onViewHistory}>
+                Issue history
+              </Button>
+            )}
+          </div>
+
+          {canManageBooks && canDelete && onDeletePermanent && (
+            <Button variant="danger" onClick={onDeletePermanent}>
+              Delete permanently
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

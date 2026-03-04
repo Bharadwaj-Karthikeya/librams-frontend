@@ -3,9 +3,13 @@ import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import Layout from "../components/layout/Layout";
 import IssueForm from "../components/issue/IssueForm";
-import IssueCard from "../components/issue/IssueCard";
 import IssueDetailsModal from "../components/issue/IssueDetailsModal";
 import Modal from "../components/ui/Modal";
+import Button from "../components/ui/Button";
+import IssueList from "../components/issue/IssueList";
+import useAuth from "../hooks/useAuth";
+import FilterPill from "../components/ui/FilterPill";
+import { BookPlus } from "lucide-react";
 import {
   issueBook,
   returnIssue,
@@ -18,9 +22,7 @@ import {
 export default function Issues() {
   const dispatch = useDispatch();
   const { issues, loading, error } = useSelector((state) => state.issues);
-  const { user } = useSelector((state) => state.auth);
-
-  const canManageIssues = user?.role === "admin" || user?.role === "staff";
+  const { user, canManageIssues } = useAuth();
   const [statusFilter, setStatusFilter] = useState("all");
   const [activeAdminTab, setActiveAdminTab] = useState("all");
   const [showIssueModal, setShowIssueModal] = useState(false);
@@ -67,6 +69,9 @@ export default function Issues() {
     }
     return issues.filter((issue) => issue.status === statusFilter);
   }, [issues, canManageIssues, statusFilter]);
+
+  const issuedCount = issues.filter((issue) => issue.status === "issued").length;
+  const overdueCount = issues.filter((issue) => issue.status === "overdue").length;
 
   const handleIssueBook = async (data) => {
     const result = await dispatch(issueBook(data));
@@ -138,81 +143,100 @@ export default function Issues() {
   return (
     <>
       <Layout>
-      <div className="bg-white p-6 rounded-2xl shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <div>
-            <h2 className="text-2xl font-semibold">Issues</h2>
-            <p className="text-sm text-gray-500">
-              {canManageIssues
-                ? "Manage all issued books"
-                : "Track the books you currently have"}
-            </p>
+        <div className="space-y-6">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                Circulation
+              </p>
+              <h2 className="text-2xl font-semibold text-[var(--text-strong)]">Issues</h2>
+              <p className="text-sm text-[var(--text-muted)] mt-2">
+                {canManageIssues
+                  ? "Manage issued books and overdue circulation."
+                  : "Track the books you currently have."}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {canManageIssues && (
+                <Button onClick={() => setShowIssueModal(true)}>
+                  <span className="inline-flex items-center gap-2">
+                    <BookPlus size={16} />
+                    Issue book
+                  </span>
+                </Button>
+              )}
+              <Button variant="outline" onClick={refreshIssues}>
+                Refresh
+              </Button>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3 self-start md:self-auto">
-            {canManageIssues && (
-              <button
-                onClick={() => setShowIssueModal(true)}
-                className="px-4 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700"
-              >
-                + Issue Book
-              </button>
-            )}
-            <button
-              onClick={refreshIssues}
-              className="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-50"
-            >
-              Refresh
-            </button>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="border border-[var(--line)] p-4 bg-[var(--surface)]">
+              <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                Total issues
+              </p>
+              <p className="text-2xl font-semibold text-[var(--text-strong)] mt-2">
+                {issues.length}
+              </p>
+            </div>
+            <div className="border border-[var(--line)] p-4 bg-[var(--surface)]">
+              <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                Issued
+              </p>
+              <p className="text-2xl font-semibold text-[var(--text-strong)] mt-2">
+                {issuedCount}
+              </p>
+            </div>
+            <div className="border border-[var(--line)] p-4 bg-[var(--surface)]">
+              <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+                Overdue
+              </p>
+              <p className="text-2xl font-semibold text-[var(--text-strong)] mt-2">
+                {overdueCount}
+              </p>
+            </div>
           </div>
-        </div>
 
-        {canManageIssues && (
-          <div className="flex flex-wrap gap-2 mb-6">
-            {adminTabs.map((tab) => (
-              <button
-                key={tab.value}
-                onClick={() => setActiveAdminTab(tab.value)}
-                className={`px-3 py-1 rounded-full text-sm border transition ${activeAdminTab === tab.value ? "bg-blue-600 text-white border-blue-600" : "bg-gray-100 text-gray-700 border-gray-200"}`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        )}
+          {canManageIssues && (
+            <div className="flex flex-wrap gap-2">
+              {adminTabs.map((tab) => (
+                <FilterPill
+                  key={tab.value}
+                  onClick={() => setActiveAdminTab(tab.value)}
+                  active={activeAdminTab === tab.value}
+                >
+                  {tab.label}
+                </FilterPill>
+              ))}
+            </div>
+          )}
 
-        {!canManageIssues && (
-          <div className="flex flex-wrap gap-2 mb-6">
-            {statusOptions.map((status) => (
-              <button
-                key={status.value}
-                onClick={() => setStatusFilter(status.value)}
-                className={`px-3 py-1 rounded-full text-sm border transition ${statusFilter === status.value ? "bg-blue-600 text-white border-blue-600" : "bg-gray-100 text-gray-700 border-gray-200"}`}
-              >
-                {status.label}
-              </button>
-            ))}
-          </div>
-        )}
+          {!canManageIssues && (
+            <div className="flex flex-wrap gap-2">
+              {statusOptions.map((status) => (
+                <FilterPill
+                  key={status.value}
+                  onClick={() => setStatusFilter(status.value)}
+                  active={statusFilter === status.value}
+                >
+                  {status.label}
+                </FilterPill>
+              ))}
+            </div>
+          )}
 
-        {loading && <p>Loading issues...</p>}
-        {error && <p className="text-red-500">{error}</p>}
-        {!loading && filteredIssues.length === 0 && (
-          <p className="text-gray-500">No issues found for this view.</p>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredIssues.map((issue) => (
-            <IssueCard
-              key={issue._id}
-              issue={issue}
+          {loading && <p>Loading issues...</p>}
+          {error && <p className="text-red-500">{error}</p>}
+          {!loading && (
+            <IssueList
+              issues={filteredIssues}
               onSelect={openIssueDetails}
-              canManageIssues={canManageIssues}
               showRecipient={canManageIssues}
             />
-          ))}
+          )}
         </div>
-      </div>
       </Layout>
 
       {showIssueModal && (
@@ -226,13 +250,17 @@ export default function Issues() {
                 </p>
               </div>
             </div>
-            <IssueForm onSubmit={handleIssueBook} />
+            <IssueForm
+              onSubmit={handleIssueBook}
+              onCancel={() => setShowIssueModal(false)}
+            />
           </div>
         </Modal>
       )}
 
       {selectedIssue && (
         <IssueDetailsModal
+          key={selectedIssue._id}
           issue={selectedIssue}
           onClose={closeIssueDetails}
           canManageIssues={canManageIssues}

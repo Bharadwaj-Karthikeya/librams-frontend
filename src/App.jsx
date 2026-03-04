@@ -1,11 +1,11 @@
 import { BrowserRouter } from "react-router-dom";
-import { Toaster } from "react-hot-toast";
 import AppRoutes from "./routes/AppRoutes";
+import ToastProvider from "./components/ui/ToastProvider";
 
 function App() {
   return (
     <BrowserRouter>
-      <Toaster position="top-right" />
+      <ToastProvider />
       <AppRoutes />
     </BrowserRouter>
   );

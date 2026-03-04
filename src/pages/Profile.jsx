@@ -2,53 +2,63 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import Layout from "../components/layout/Layout";
+import Button from "../components/ui/Button";
+import Input from "../components/ui/Input";
+import Select from "../components/ui/Select";
+import Card from "../components/ui/Card";
+import useAuth from "../hooks/useAuth";
+import { KeyRound, Pencil, Save } from "lucide-react";
 import {
 	fetchProfile,
 	updateProfile,
-	deleteUserAccount,
 	resetUserPassword,
+	changePassword,
+	updateUserRole,
 } from "../store/slices/authSlice";
 
 export default function Profile() {
 	const dispatch = useDispatch();
-	const { user, loading, profileUpdating, adminActionLoading } = useSelector((state) => state.auth);
+	const {
+		user,
+		loading,
+		profileUpdating,
+		adminActionLoading,
+		passwordUpdating,
+		roleUpdating,
+	} = useSelector((state) => state.auth);
+	const { isAdmin, isStaff } = useAuth();
 
 	const [name, setName] = useState("");
 	const [avatarFile, setAvatarFile] = useState(null);
 	const [avatarPreview, setAvatarPreview] = useState(null);
 	const [isEditing, setIsEditing] = useState(false);
-	const [deleteUserId, setDeleteUserId] = useState("");
+	const [password, setPassword] = useState("");
+	const [passwordConfirm, setPasswordConfirm] = useState("");
+	const [roleUserId, setRoleUserId] = useState("");
+	const [roleValue, setRoleValue] = useState("student");
 	const [resetEmail, setResetEmail] = useState("");
 	const [resetPasswordValue, setResetPasswordValue] = useState("");
 
-	const isAdmin = user?.role === "admin" || user?.role === "staff";
-
 	useEffect(() => {
-		if (!user) {
-			dispatch(fetchProfile());
-		}
-	}, [dispatch, user]);
-
-	const resetEditableFields = () => {
-		setName(user?.name || "");
-		setAvatarPreview(user?.profilePicture || null);
-		setAvatarFile(null);
-	};
-
-	useEffect(() => {
-		resetEditableFields();
-		setIsEditing(false);
-		if (user?._id) {
-			setDeleteUserId(user._id);
-			setResetEmail(user.email || "");
-		}
-	}, [user]);
+		dispatch(fetchProfile());
+	}, [dispatch]);
 
 	const handleToggleEditing = () => {
 		if (isEditing) {
-			resetEditableFields();
+			setName("");
+			setAvatarFile(null);
+			setAvatarPreview(null);
+			setPassword("");
+			setPasswordConfirm("");
+			setIsEditing(false);
+			return;
 		}
-		setIsEditing((prev) => !prev);
+		setName(user?.name || "");
+		setAvatarFile(null);
+		setAvatarPreview(null);
+		setPassword("");
+		setPasswordConfirm("");
+		setIsEditing(true);
 	};
 
 	const handleAvatarChange = (event) => {
@@ -69,6 +79,9 @@ export default function Profile() {
 			toast.error("No user data available");
 			return;
 		}
+		if (!isEditing) {
+			return;
+		}
 
 		const formData = new FormData();
 		let hasChanges = false;
@@ -83,33 +96,40 @@ export default function Profile() {
 			hasChanges = true;
 		}
 
-		if (!hasChanges) {
+		const wantsPasswordChange = Boolean(password.trim());
+		if (wantsPasswordChange && password.trim() !== passwordConfirm.trim()) {
+			toast.error("Passwords do not match");
+			return;
+		}
+		if (!hasChanges && !wantsPasswordChange) {
 			toast.error("Make a change before saving");
 			return;
 		}
 
 		try {
-			await dispatch(updateProfile(formData)).unwrap();
-			toast.success("Profile updated");
+			if (hasChanges) {
+				await dispatch(updateProfile(formData)).unwrap();
+			}
+			if (wantsPasswordChange) {
+				await dispatch(changePassword({ newPassword: password.trim() })).unwrap();
+			}
+
+			if (hasChanges && wantsPasswordChange) {
+				toast.success("Profile and password updated");
+			} else if (hasChanges) {
+				toast.success("Profile updated");
+			} else {
+				toast.success("Password updated");
+			}
+
 			setAvatarFile(null);
+			setAvatarPreview(null);
+			setName("");
+			setPassword("");
+			setPasswordConfirm("");
 			setIsEditing(false);
 		} catch (error) {
 			toast.error(error || "Unable to update profile");
-		}
-	};
-
-	const handleDeleteUser = async (event) => {
-		event.preventDefault();
-		if (!deleteUserId.trim()) {
-			toast.error("Provide a user id to delete");
-			return;
-		}
-
-		try {
-			await dispatch(deleteUserAccount({ userId: deleteUserId.trim() })).unwrap();
-			toast.success("Delete request completed");
-		} catch (error) {
-			toast.error(error || "Unable to delete user");
 		}
 	};
 
@@ -134,12 +154,30 @@ export default function Profile() {
 		}
 	};
 
+	const handleUpdateRole = async (event) => {
+		event.preventDefault();
+		if (!roleUserId.trim()) {
+			toast.error("Provide a user id to update role");
+			return;
+		}
+
+		try {
+			await dispatch(
+				updateUserRole({ userId: roleUserId.trim(), newRole: roleValue })
+			).unwrap();
+			toast.success("Role updated successfully");
+			setRoleUserId("");
+		} catch (error) {
+			toast.error(error || "Unable to update role");
+		}
+	};
+
 	if (loading && !user) {
 		return (
 			<Layout>
-				<div className="bg-white p-6 rounded-2xl shadow-sm">
+				<Card>
 					<p>Loading profile...</p>
-				</div>
+				</Card>
 			</Layout>
 		);
 	}
@@ -147,189 +185,222 @@ export default function Profile() {
 	if (!user) {
 		return (
 			<Layout>
-				<div className="bg-white p-6 rounded-2xl shadow-sm">
+				<Card>
 					<p className="text-red-500">Unable to load profile information.</p>
-				</div>
+				</Card>
 			</Layout>
 		);
 	}
 
-	const joinedDate = user.createdAt ? new Date(user.createdAt).toLocaleDateString() : null;
 	const displayAvatar = avatarPreview || user.profilePicture;
 
 	return (
 		<Layout>
 			<div className="space-y-6">
-				<div className="grid gap-6 lg:grid-cols-3">
-					<section className="bg-white p-6 rounded-2xl shadow-sm lg:col-span-1">
-						<div className="flex flex-col items-center text-center">
-							{displayAvatar ? (
-								<img
-									src={displayAvatar}
-									alt={`${user.name} avatar`}
-									className="w-32 h-32 rounded-full object-cover border border-gray-200"
+				<div>
+					<p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+						Profile
+					</p>
+					<h2 className="text-2xl font-semibold text-[var(--text-strong)]">
+						Account overview
+					</h2>
+					<p className="text-sm text-[var(--text-muted)] mt-2">
+						Manage your profile details and account settings.
+					</p>
+				</div>
+				<Card>
+					<form className="space-y-6" onSubmit={handleProfileSubmit}>
+						<div className="flex flex-col lg:flex-row gap-6">
+							<div className="flex flex-col items-center gap-3 lg:w-64">
+								{displayAvatar ? (
+									<img
+										src={displayAvatar}
+										alt={`${user.name} avatar`}
+										className="w-56 h-56 rounded-full object-cover border border-[var(--line)]"
+									/>
+								) : (
+									<div className="w-32 h-32 rounded-full bg-[var(--surface-muted)] text-[var(--accent)] flex items-center justify-center text-4xl font-semibold">
+										{user.name?.charAt(0)?.toUpperCase() || "?"}
+									</div>
+								)}
+								<Input
+									id="avatar"
+									type="file"
+									label="Profile photo"
+									helperText="JPEG or PNG up to 5MB."
+									accept="image/*"
+									onChange={handleAvatarChange}
+									disabled={!isEditing}
 								/>
-							) : (
-								<div className="w-32 h-32 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-3xl font-semibold">
-									{user.name?.charAt(0)?.toUpperCase() || "?"}
-								</div>
-							)}
-							<h1 className="text-2xl font-semibold text-gray-900 mt-4">{user.name}</h1>
-							<p className="text-sm text-gray-500">{user.email}</p>
-							<span className="mt-2 inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
-								{user.role}
-							</span>
-						</div>
-
-						<div className="mt-6 space-y-3 text-sm text-gray-600">
-							{joinedDate && (
-								<div className="flex items-center justify-between">
-									<span className="text-gray-500">Joined</span>
-									<span>{joinedDate}</span>
-								</div>
-							)}
-						</div>
-					</section>
-
-					<section className="bg-white p-6 rounded-2xl shadow-sm lg:col-span-2">
-						<div className="flex flex-wrap gap-4 items-center justify-between mb-4">
-							<div>
-								<h2 className="text-xl font-semibold text-gray-900">Edit profile</h2>
-								<p className="text-sm text-gray-500">Update your name or upload a new avatar.</p>
 							</div>
-							<div className="flex gap-3">
-								<button
-									type="button"
-									onClick={handleToggleEditing}
-									className="text-sm font-medium text-white bg-gray-900 px-4 py-2 rounded-lg hover:bg-gray-700 disabled:opacity-60"
-									disabled={loading}
-								>
-									{isEditing ? "Cancel" : "Edit profile"}
-								</button>
-								<button
-									type="button"
-									onClick={() => dispatch(fetchProfile())}
-									className="text-sm font-medium text-blue-700 hover:text-blue-900"
-									disabled={loading}
-								>
-									Refresh
-								</button>
-							</div>
-						</div>
 
-						<form className="space-y-6" onSubmit={handleProfileSubmit}>
-							<div>
-								<label htmlFor="name" className="block text-sm font-medium text-gray-700">
-									Full name
-								</label>
-								<input
+							<div className="flex-1 space-y-4">
+								<Input
 									id="name"
-									type="text"
-									value={name}
+									label="Full name"
+									value={isEditing ? name || user.name || "" : user.name || ""}
 									onChange={(event) => setName(event.target.value)}
-									className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none disabled:bg-gray-50"
 									placeholder="Enter your name"
 									disabled={!isEditing}
 								/>
-							</div>
-
-							<div>
-								<label htmlFor="avatar" className="block text-sm font-medium text-gray-700">
-									Profile picture
-								</label>
-								<input
-									id="avatar"
-									type="file"
-									accept="image/*"
-									onChange={handleAvatarChange}
-									className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-50"
-									disabled={!isEditing}
+								<Input
+									id="email"
+									label="Email"
+									value={user.email || ""}
+									disabled
+									readOnly
 								/>
-								<p className="text-xs text-gray-500 mt-1">JPEG or PNG up to 5MB.</p>
+								<Input
+									id="role"
+									label="Role"
+									value={user.role || ""}
+									disabled
+									readOnly
+								/>
 							</div>
+						</div>
 
-							<button
-								type="submit"
-								className="px-6 py-3 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60"
-								disabled={!isEditing || profileUpdating}
-							>
-								{profileUpdating ? "Saving..." : "Save changes"}
-							</button>
-						</form>
-					</section>
-				</div>
-
-				{isAdmin && (
-					<div className="grid gap-6 lg:grid-cols-2">
-						<section className="bg-white p-6 rounded-2xl shadow-sm">
-							<h3 className="text-lg font-semibold text-gray-900">Delete user</h3>
-							<p className="text-sm text-gray-500 mb-4">
-								Provide a user ID to remove the account permanently. This action cannot be undone.
-							</p>
-							<form className="space-y-4" onSubmit={handleDeleteUser}>
-								<div>
-									<label htmlFor="delete-user" className="block text-sm font-medium text-gray-700">
-										User ID
-									</label>
-									<input
-										id="delete-user"
-										type="text"
-										value={deleteUserId}
-										onChange={(event) => setDeleteUserId(event.target.value)}
-										className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-red-500 focus:outline-none"
-									/>
-								</div>
-								<button
-									type="submit"
-									className="px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-60"
-									disabled={adminActionLoading}
-								>
-									{adminActionLoading ? "Processing..." : "Delete user"}
-								</button>
-							</form>
-						</section>
-
-						<section className="bg-white p-6 rounded-2xl shadow-sm">
-							<h3 className="text-lg font-semibold text-gray-900">Reset password</h3>
-							<p className="text-sm text-gray-500 mb-4">
-								Issue a password reset by supplying the user email and a new password.
-							</p>
-							<form className="space-y-4" onSubmit={handleResetPassword}>
-								<div>
-									<label htmlFor="reset-email" className="block text-sm font-medium text-gray-700">
-										Email
-									</label>
-									<input
-										id="reset-email"
-										type="email"
-										value={resetEmail}
-										onChange={(event) => setResetEmail(event.target.value)}
-										className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-										placeholder="user@example.com"
-									/>
-								</div>
-								<div>
-									<label htmlFor="reset-password" className="block text-sm font-medium text-gray-700">
-										New password
-									</label>
-									<input
-										id="reset-password"
+						{isEditing && (
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+								<Input
+									id="new-password"
+									type="password"
+									label="New password"
+									value={password}
+									onChange={(event) => setPassword(event.target.value)}
+									disabled={!isEditing}
+									minLength={6}
+								/>
+								{password.trim() && (
+									<Input
+										id="confirm-password"
 										type="password"
-										value={resetPasswordValue}
-										onChange={(event) => setResetPasswordValue(event.target.value)}
-										className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+										label="Retype new password"
+										value={passwordConfirm}
+										onChange={(event) => setPasswordConfirm(event.target.value)}
+										disabled={!isEditing}
 										minLength={6}
 									/>
-								</div>
-								<button
-									type="submit"
-									className="px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60"
-									disabled={adminActionLoading}
-								>
-									{adminActionLoading ? "Processing..." : "Reset password"}
-								</button>
-							</form>
-						</section>
+								)}
+							</div>
+						)}
+
+						<div className="flex flex-wrap justify-end gap-3 pt-4 border-t border-[var(--line)]">
+							{isEditing ? (
+								<>
+									<Button
+										type="button"
+										variant="outline"
+										onClick={handleToggleEditing}
+									>
+										Cancel
+									</Button>
+									<Button
+										type="submit"
+										disabled={profileUpdating || passwordUpdating}
+									>
+										<span className="inline-flex items-center gap-2">
+											<Save size={16} />
+											{profileUpdating || passwordUpdating ? "Saving..." : "Save changes"}
+										</span>
+									</Button>
+								</>
+							) : (
+								<Button type="button" onClick={handleToggleEditing} disabled={loading}>
+									<span className="inline-flex items-center gap-2">
+										<Pencil size={16} />
+										Edit profile
+									</span>
+								</Button>
+							)}
+						</div>
+					</form>
+				</Card>
+
+				{(isAdmin || isStaff) && (
+					<div className="space-y-4">
+						<div>
+							<p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+								Admin & staff tools
+							</p>
+							<h3 className="text-lg font-semibold text-[var(--text-strong)]">
+								Account controls
+							</h3>
+							<p className="text-sm text-[var(--text-muted)]">
+								Update roles or reset account passwords.
+							</p>
+						</div>
+						<div className="grid gap-6 lg:grid-cols-2">
+							{isAdmin && (
+								<Card>
+									<h3 className="text-lg font-semibold text-[var(--text-strong)]">
+										Change user role
+									</h3>
+									<p className="text-sm text-[var(--text-muted)] mb-4">
+										Provide a user ID and assign a new role.
+									</p>
+									<form className="space-y-4" onSubmit={handleUpdateRole}>
+										<Input
+											id="role-user-id"
+											label="User ID"
+											value={roleUserId}
+											onChange={(event) => setRoleUserId(event.target.value)}
+										/>
+										<Select
+											id="role-value"
+											label="New role"
+											value={roleValue}
+											onChange={(event) => setRoleValue(event.target.value)}
+										>
+											<option value="student">Student</option>
+											<option value="staff">Staff</option>
+											<option value="admin">Admin</option>
+										</Select>
+										<Button
+											type="submit"
+											disabled={roleUpdating}
+										>
+											{roleUpdating ? "Updating..." : "Update role"}
+										</Button>
+									</form>
+								</Card>
+							)}
+
+							<Card>
+								<h3 className="text-lg font-semibold text-[var(--text-strong)]">Reset password</h3>
+								<p className="text-sm text-[var(--text-muted)] mb-4">
+									Issue a password reset by supplying the user email and a new password.
+								</p>
+								<form className="space-y-4" onSubmit={handleResetPassword}>
+									<Input
+										id="reset-email"
+										type="email"
+										label="Email"
+										value={resetEmail}
+										onChange={(event) => setResetEmail(event.target.value)}
+										placeholder="user@example.com"
+									/>
+									<Input
+										id="reset-password"
+										type="password"
+										label="New password"
+										value={resetPasswordValue}
+										onChange={(event) => setResetPasswordValue(event.target.value)}
+										minLength={6}
+									/>
+									<Button
+										type="submit"
+										variant="primary"
+										disabled={adminActionLoading}
+									>
+										<span className="inline-flex items-center gap-2">
+											<KeyRound size={16} />
+											{adminActionLoading ? "Processing..." : "Reset password"}
+										</span>
+									</Button>
+								</form>
+							</Card>
+						</div>
 					</div>
 				)}
 			</div>

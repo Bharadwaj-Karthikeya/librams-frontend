@@ -7,6 +7,7 @@ export default function Modal({
   position = "center",
   contentClassName = "",
   showCloseButton = true,
+  scrollable = true,
 }) {
   const modalRef = useRef(null);
 
@@ -34,7 +35,14 @@ export default function Modal({
       : "relative w-full max-w-4xl";
 
   const contentSizingClasses =
-    position === "right" ? "h-full" : "max-h-[90vh]";
+    position === "right"
+      ? "h-full"
+      : scrollable
+        ? "max-h-[90vh]"
+        : "max-h-none";
+
+  const overflowClasses = scrollable ? "overflow-y-auto" : "overflow-visible";
+  const contentAlignmentClasses = position === "right" ? "" : "mx-auto";
 
   return createPortal(
     <div
@@ -43,7 +51,7 @@ export default function Modal({
       <div className={wrapperClasses}>
         <div
           ref={modalRef}
-          className={`bg-white p-6 rounded-2xl shadow-2xl overflow-y-auto ${contentSizingClasses} ${contentClassName}`}
+          className={`relative bg-white p-6 rounded-2xl shadow-2xl ${contentAlignmentClasses} ${overflowClasses} ${contentSizingClasses} ${contentClassName}`}
         >
           {showCloseButton && (
             <button

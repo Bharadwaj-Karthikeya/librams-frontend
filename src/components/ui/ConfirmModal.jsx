@@ -1,3 +1,6 @@
+import { createPortal } from "react-dom";
+import Button from "./Button";
+
 export default function ConfirmModal({
   title,
   message,
@@ -7,8 +10,8 @@ export default function ConfirmModal({
   onCancel,
   loading,
 }) {
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+  return createPortal(
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[60]">
       <div className="bg-white p-6 rounded-xl w-full max-w-md">
         <h2 className="text-lg font-semibold mb-3">
           {title}
@@ -19,22 +22,16 @@ export default function ConfirmModal({
         </p>
 
         <div className="flex justify-end gap-3">
-          <button
-            onClick={onCancel}
-            className="px-4 py-2 border rounded-md"
-          >
+          <Button variant="outline" onClick={onCancel}>
             {cancelText}
-          </button>
+          </Button>
 
-          <button
-            onClick={onConfirm}
-            disabled={loading}
-            className="px-4 py-2 bg-red-600 text-white rounded-md"
-          >
+          <Button variant="danger" onClick={onConfirm} disabled={loading}>
             {loading ? "Processing..." : confirmText}
-          </button>
+          </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

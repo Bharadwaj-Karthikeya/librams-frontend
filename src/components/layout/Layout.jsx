@@ -1,11 +1,14 @@
-import { useSelector, useDispatch } from "react-redux";
+import { useDispatch } from "react-redux";
 import { logout } from "../../store/slices/authSlice";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import Sidebar from "./Sidebar";
+import useAuth from "../../hooks/useAuth";
 
 export default function Layout({ children }) {
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useAuth();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const density = user?.role === "student" ? "spacious" : "compact";
 
   const handleLogout = () => {
     dispatch(logout());
@@ -13,56 +16,10 @@ export default function Layout({ children }) {
   };
 
   return (
-    <div className="min-h-screen flex bg-gray-100">
-      
-      {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-md p-6">
-        <h2 className="text-xl font-bold mb-6">Library</h2>
+    <div className="min-h-screen flex" data-density={density}>
+      <Sidebar user={user} onLogout={handleLogout} />
 
-        <nav className="flex flex-col gap-4">
-          <Link to="/dashboard" className="hover:text-blue-600">
-            Dashboard
-          </Link>
-
-          <Link to="/books" className="hover:text-blue-600">
-            Books
-          </Link>
-
-          {user?.role !== "student" && (
-            <Link to="/issues" className="hover:text-blue-600">
-              Issues
-            </Link>
-          )}
-
-          {user?.role === "student" && (
-            <Link to="/my-issues" className="hover:text-blue-600">
-              My Issues
-            </Link>
-          )}
-
-          <Link to="/profile" className="hover:text-blue-600">
-            Profile
-          </Link>
-        </nav>
-      </aside>
-
-      {/* Main Content */}
       <main className="flex-1 p-8">
-
-        {/* Topbar */}
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-semibold">
-            Welcome, {user?.name || user?.email}
-          </h1>
-
-          <button
-            onClick={handleLogout}
-            className="bg-red-500 text-white px-4 py-2 rounded-md"
-          >
-            Logout
-          </button>
-        </div>
-
         {children}
       </main>
     </div>

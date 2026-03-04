@@ -3,6 +3,11 @@ import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import Layout from "../components/layout/Layout";
+import { formatDate } from "../utils/formatDate";
+import useAuth from "../hooks/useAuth";
+import Button from "../components/ui/Button";
+import Card from "../components/ui/Card";
+import Badge from "../components/ui/Badge";
 import { fetchBookById } from "../store/slices/booksSlice";
 import {
   fetchBookIssueHistory,
@@ -14,7 +19,7 @@ export default function BookDetails() {
   const { id } = useParams();
   const dispatch = useDispatch();
   const { selectedBook, loading, error } = useSelector((state) => state.books);
-  const { user } = useSelector((state) => state.auth);
+  const { canManageIssues } = useAuth();
 
   const [issueHistory, setIssueHistory] = useState([]);
   const [issueLoading, setIssueLoading] = useState(false);
@@ -24,7 +29,7 @@ export default function BookDetails() {
   const [showHistoryPanel, setShowHistoryPanel] = useState(false);
   const [historyError, setHistoryError] = useState(null);
 
-  const canViewIssueHistory = user?.role === "admin" || user?.role === "staff";
+  const canViewIssueHistory = canManageIssues;
 
   useEffect(() => {
     if (!id) return;
@@ -60,18 +65,14 @@ export default function BookDetails() {
       {
         key: "active",
         label: selectedBook.isActive ? "Active" : "Inactive",
-        classes: selectedBook.isActive
-          ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-          : "bg-gray-100 text-gray-600 border border-gray-200",
+        variant: selectedBook.isActive ? "success" : "neutral",
       },
       {
         key: "issuable",
         label: selectedBook.isAvailableforIssue
           ? "Available for issue"
           : "Not issuable",
-        classes: selectedBook.isAvailableforIssue
-          ? "bg-blue-50 text-blue-700 border border-blue-100"
-          : "bg-yellow-50 text-yellow-700 border border-yellow-200",
+        variant: selectedBook.isAvailableforIssue ? "info" : "warning",
       },
     ];
   }, [selectedBook]);
@@ -86,9 +87,7 @@ export default function BookDetails() {
       { label: "Available Copies", value: selectedBook.availableCopies ?? "—" },
       {
         label: "Last Updated",
-        value: selectedBook.updatedAt
-          ? new Date(selectedBook.updatedAt).toLocaleDateString()
-          : "—",
+        value: formatDate(selectedBook.updatedAt),
       },
     ];
   }, [selectedBook]);
@@ -108,7 +107,7 @@ export default function BookDetails() {
     try {
       const data = await dispatch(fetchIssueDetails(issueId)).unwrap();
       setIssueDetail(data.issue || null);
-    } catch (err) {
+    } catch {
       setIssueDetail(null);
       toast.error("Unable to load issue details right now.");
     } finally {
@@ -136,9 +135,9 @@ export default function BookDetails() {
   if (loading && !selectedBook) {
     return (
       <Layout>
-        <div className="bg-white p-6 rounded-2xl shadow-sm">
+        <Card>
           <p>Loading book details...</p>
-        </div>
+        </Card>
       </Layout>
     );
   }
@@ -146,11 +145,11 @@ export default function BookDetails() {
   if (!selectedBook) {
     return (
       <Layout>
-        <div className="bg-white p-6 rounded-2xl shadow-sm">
+        <Card>
           <p className="text-red-500">
             {error || "We couldn't find that book."}
           </p>
-        </div>
+        </Card>
       </Layout>
     );
   }
@@ -160,33 +159,34 @@ export default function BookDetails() {
       <Layout>
       <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm">
-            <p className="text-sm text-gray-500">ISBN {selectedBook.isbn}</p>
-            <h1 className="text-3xl font-semibold text-gray-900 mt-1">
+          <Card className="lg:col-span-2">
+            <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+              ISBN {selectedBook.isbn}
+            </p>
+            <h1 className="text-3xl font-semibold text-[var(--text-strong)] mt-2">
               {selectedBook.title}
             </h1>
-            <p className="text-base text-gray-600 mb-4">
+            <p className="text-base text-[var(--text-muted)] mb-4">
               {selectedBook.author}
             </p>
 
             <div className="flex flex-wrap gap-2">
               {statusBadges.map((badge) => (
-                <span
-                  key={badge.key}
-                  className={`text-xs font-semibold px-3 py-1 rounded-full ${badge.classes}`}
-                >
+                <Badge key={badge.key} variant={badge.variant}>
                   {badge.label}
-                </span>
+                </Badge>
               ))}
             </div>
 
             {canViewIssueHistory && (
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => openHistoryPanel()}
-                className="mt-4 inline-flex items-center text-sm font-semibold text-blue-700 hover:text-blue-900"
+                className="mt-4"
               >
                 View issue history
-              </button>
+              </Button>
             )}
 
             {selectedBook.description && (
@@ -202,7 +202,7 @@ export default function BookDetails() {
               {bookMeta.map((item) => (
                 <div
                   key={item.label}
-                  className="border border-gray-100 rounded-xl p-4 bg-gray-50"
+                  className="border border-gray-100 p-4 bg-gray-50"
                 >
                   <p className="text-xs uppercase tracking-wide text-gray-500">
                     {item.label}
@@ -217,50 +217,52 @@ export default function BookDetails() {
             {canViewIssueHistory && (
               <div className="mt-6">
                 {activeIssue ? (
-                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-                    <p className="text-sm font-semibold text-blue-900 mb-1">
+                  <div className="bg-[rgba(28,79,215,0.1)] border border-[rgba(28,79,215,0.2)] p-4">
+                    <p className="text-sm font-semibold text-[var(--text-strong)] mb-1">
                       Currently issued
                     </p>
-                    <p className="text-sm text-blue-900">
+                    <p className="text-sm text-[var(--text-strong)]">
                       {activeIssue.toUser?.name || activeIssue.toUser?.email} · due{" "}
-                      {new Date(activeIssue.dueDate).toLocaleDateString()}
+                      {formatDate(activeIssue.dueDate)}
                     </p>
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => openHistoryPanel(activeIssue._id)}
-                      className="mt-3 text-sm font-medium text-blue-700 hover:text-blue-900"
                       disabled={issueDetailLoading && detailRequestId === activeIssue._id}
+                      className="mt-3"
                     >
                       {issueDetailLoading && detailRequestId === activeIssue._id
                         ? "Loading..."
                         : "View in issue history"}
-                    </button>
+                    </Button>
                   </div>
                 ) : (
-                  <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 text-emerald-900 text-sm">
+                  <div className="bg-[rgba(42,157,143,0.12)] border border-[rgba(42,157,143,0.25)] p-4 text-[var(--text-strong)] text-sm">
                     This book is currently available for circulation.
                   </div>
                 )}
               </div>
             )}
-          </div>
+          </Card>
 
-          <div className="bg-white p-6 rounded-2xl shadow-sm flex flex-col gap-4">
+          <Card className="flex flex-col gap-4">
             {selectedBook.bookCover ? (
               <img
                 src={selectedBook.bookCover}
                 alt={`${selectedBook.title} cover`}
-                className="w-full rounded-xl object-cover h-72 border border-gray-100"
+                className="w-full object-cover h-72 border border-[var(--line)]"
               />
             ) : (
-              <div className="w-full h-72 rounded-xl border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-sm">
+              <div className="w-full h-72 border border-dashed border-[var(--line)] flex items-center justify-center text-[var(--text-muted)] text-sm">
                 No cover available
               </div>
             )}
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-[var(--text-muted)]">
               <p>Copies on hand: {selectedBook.copies ?? "—"}</p>
               <p>Available now: {selectedBook.availableCopies ?? "—"}</p>
             </div>
-          </div>
+          </Card>
         </div>
 
       </div>
@@ -279,12 +281,9 @@ export default function BookDetails() {
                 {selectedBook.title}
               </p>
             </div>
-            <button
-              onClick={closeHistoryPanel}
-              className="text-gray-500 hover:text-gray-700 text-sm"
-            >
-              Close
-            </button>
+            <Button variant="outline" size="sm" onClick={closeHistoryPanel}>
+              ✕
+            </Button>
           </div>
 
           {issueLoading ? (
@@ -305,7 +304,7 @@ export default function BookDetails() {
                         {issue.toUser?.name || issue.toUser?.email}
                       </p>
                       <p className="text-xs text-gray-500">
-                        Issued on {new Date(issue.issueDate).toLocaleDateString()}
+                        Issued on {formatDate(issue.issueDate)}
                       </p>
                     </div>
                     <span
@@ -321,22 +320,24 @@ export default function BookDetails() {
                     </span>
                   </div>
                   <p className="text-sm text-gray-700">
-                    Due {new Date(issue.dueDate).toLocaleDateString()}
+                    Due {formatDate(issue.dueDate)}
                   </p>
                   {issue.returnedDate && (
                     <p className="text-sm text-gray-700">
-                      Returned {new Date(issue.returnedDate).toLocaleDateString()}
+                      Returned {formatDate(issue.returnedDate)}
                     </p>
                   )}
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => handleViewIssueDetails(issue._id)}
-                    className="mt-3 text-sm font-medium text-blue-600 hover:text-blue-800"
                     disabled={issueDetailLoading && detailRequestId === issue._id}
+                    className="mt-3"
                   >
                     {issueDetailLoading && detailRequestId === issue._id
                       ? "Loading..."
                       : "View details"}
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>
@@ -348,12 +349,9 @@ export default function BookDetails() {
                 <h4 className="text-lg font-semibold text-blue-900">
                   Issue detail
                 </h4>
-                <button
-                  onClick={clearIssueDetail}
-                  className="text-sm text-blue-700 hover:text-blue-900"
-                >
+                <Button variant="ghost" size="sm" onClick={clearIssueDetail}>
                   Clear
-                </button>
+                </Button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-900">
                 <p>
@@ -361,23 +359,19 @@ export default function BookDetails() {
                 </p>
                 <p>Status: {issueDetail.status}</p>
                 <p>
-                  Issued: {issueDetail.issueDate
-                    ? new Date(issueDetail.issueDate).toLocaleString()
-                    : "—"}
+                  Issued: {formatDate(issueDetail.issueDate, true)}
                 </p>
                 <p>
-                  Due: {issueDetail.dueDate
-                    ? new Date(issueDetail.dueDate).toLocaleString()
-                    : "—"}
+                  Due: {formatDate(issueDetail.dueDate, true)}
                 </p>
                 <p>
                   Processed by: {issueDetail.byUser?.name || issueDetail.byUser?.email || "—"}
                 </p>
-                {issueDetail.returnedDate && (
-                  <p>
-                    Returned {new Date(issueDetail.returnedDate).toLocaleString()}
-                  </p>
-                )}
+                  {issueDetail.returnedDate && (
+                    <p>
+                      Returned {formatDate(issueDetail.returnedDate, true)}
+                    </p>
+                  )}
               </div>
             </div>
           )}

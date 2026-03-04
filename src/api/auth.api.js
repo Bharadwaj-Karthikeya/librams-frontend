@@ -10,7 +10,7 @@ export const getProfile = () =>
   api.get("/auth/profile");
 
 export const updateProfileRequest = (formData) =>
-  api.put("/auth/profile", formData, {
+  api.patch("/auth/profile", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 
@@ -19,3 +19,9 @@ export const deleteUserAccountRequest = (payload) =>
 
 export const resetUserPasswordRequest = (payload) =>
   api.post("/auth/reset-password", payload);
+
+export const changePasswordRequest = (payload) =>
+  api.post("/auth/change-password", payload);
+
+export const updateUserRoleRequest = (payload) =>
+  api.post("/auth/update-role", payload);

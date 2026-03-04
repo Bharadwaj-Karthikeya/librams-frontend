@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Layout from "../components/layout/Layout";
-import IssueCard from "../components/issue/IssueCard";
 import IssueDetailsModal from "../components/issue/IssueDetailsModal";
 import { fetchUserIssues } from "../store/slices/issueSlice";
+import Button from "../components/ui/Button";
+import IssueList from "../components/issue/IssueList";
+import FilterPill from "../components/ui/FilterPill";
 
 const STATUS_OPTIONS = [
 	{ label: "All", value: "all" },
@@ -34,6 +36,9 @@ export default function UserIssues() {
 		return issues.filter((issue) => issue.status === statusFilter);
 	}, [issues, statusFilter]);
 
+	const issuedCount = issues.filter((issue) => issue.status === "issued").length;
+	const overdueCount = issues.filter((issue) => issue.status === "overdue").length;
+
 	const openIssueDetails = (issue) => {
 		setSelectedIssue(issue);
 	};
@@ -44,55 +49,79 @@ export default function UserIssues() {
 
 	return (
 		<Layout>
-			<div className="bg-white p-6 rounded-2xl shadow-sm">
-				<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+			<div className="space-y-6">
+				<div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
 					<div>
-						<h2 className="text-2xl font-semibold">My Issues</h2>
-						<p className="text-sm text-gray-500">
+						<p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+							My shelf
+						</p>
+						<h2 className="text-2xl font-semibold text-[var(--text-strong)]">My Issues</h2>
+						<p className="text-sm text-[var(--text-muted)] mt-2">
 							Review the books you have borrowed and their current status.
 						</p>
 					</div>
 
-					<button
-						onClick={refreshIssues}
-						className="self-start md:self-auto px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-50"
-					>
+					<Button variant="outline" onClick={refreshIssues}>
 						Refresh
-					</button>
+					</Button>
 				</div>
 
-				<div className="flex flex-wrap gap-2 mb-6">
+				<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+					<div className="border border-[var(--line)] p-4 bg-[var(--surface)]">
+						<p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+							All issues
+						</p>
+						<p className="text-2xl font-semibold text-[var(--text-strong)] mt-2">
+							{issues.length}
+						</p>
+					</div>
+					<div className="border border-[var(--line)] p-4 bg-[var(--surface)]">
+						<p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+							Issued
+						</p>
+						<p className="text-2xl font-semibold text-[var(--text-strong)] mt-2">
+							{issuedCount}
+						</p>
+					</div>
+					<div className="border border-[var(--line)] p-4 bg-[var(--surface)]">
+						<p className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+							Overdue
+						</p>
+						<p className="text-2xl font-semibold text-[var(--text-strong)] mt-2">
+							{overdueCount}
+						</p>
+					</div>
+				</div>
+
+				<div className="flex flex-wrap gap-2">
 					{STATUS_OPTIONS.map((status) => (
-						<button
+						<FilterPill
 							key={status.value}
 							onClick={() => setStatusFilter(status.value)}
-							className={`px-3 py-1 rounded-full text-sm border transition ${statusFilter === status.value ? "bg-blue-600 text-white border-blue-600" : "bg-gray-100 text-gray-700 border-gray-200"}`}
+							active={statusFilter === status.value}
 						>
 							{status.label}
-						</button>
+						</FilterPill>
 					))}
 				</div>
 
 				{loading && <p>Loading issues...</p>}
 				{error && <p className="text-red-500">{error}</p>}
-				{!loading && filteredIssues.length === 0 && (
-					<p className="text-gray-500">No issues found for this view.</p>
+				{!loading && (
+					<IssueList
+						issues={filteredIssues}
+						onSelect={openIssueDetails}
+						showRecipient={false}
+					/>
 				)}
-
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-					{filteredIssues.map((issue) => (
-						<IssueCard
-							key={issue._id}
-							issue={issue}
-							onSelect={openIssueDetails}
-							showRecipient={false}
-						/>
-					))}
-				</div>
 			</div>
-		{selectedIssue && (
-			<IssueDetailsModal issue={selectedIssue} onClose={closeIssueDetails} />
-		)}
+			{selectedIssue && (
+				<IssueDetailsModal
+					key={selectedIssue._id}
+					issue={selectedIssue}
+					onClose={closeIssueDetails}
+				/>
+			)}
 		</Layout>
 	);
 }

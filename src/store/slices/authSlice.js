@@ -6,6 +6,8 @@ import {
   updateProfileRequest,
   deleteUserAccountRequest,
   resetUserPasswordRequest,
+  changePasswordRequest,
+  updateUserRoleRequest,
 } from "../../api/auth.api";
 
 /*
@@ -95,13 +97,39 @@ export const resetUserPassword = createAsyncThunk(
   }
 );
 
+export const changePassword = createAsyncThunk(
+  "auth/changePassword",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await changePasswordRequest(payload);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error?.response?.data?.message || "Password change failed");
+    }
+  }
+);
+
+export const updateUserRole = createAsyncThunk(
+  "auth/updateUserRole",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const response = await updateUserRoleRequest(payload);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error?.response?.data?.message || "Role update failed");
+    }
+  }
+);
+
 const initialState = {
   user: JSON.parse(localStorage.getItem("user")) || null,
   token: localStorage.getItem("token") || null,
   loading: false,
   error: null,
   profileUpdating: false,
+  passwordUpdating: false,
   adminActionLoading: false,
+  roleUpdating: false,
 };
 
 const authSlice = createSlice({
@@ -157,8 +185,9 @@ const authSlice = createSlice({
       })
       .addCase(fetchProfile.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload;
-        localStorage.setItem("user", JSON.stringify(action.payload));
+        const profile = action.payload?.user || action.payload;
+        state.user = profile;
+        localStorage.setItem("user", JSON.stringify(profile));
       })
       .addCase(fetchProfile.rejected, (state, action) => {
         state.loading = false;
@@ -212,6 +241,37 @@ const authSlice = createSlice({
       })
       .addCase(resetUserPassword.rejected, (state, action) => {
         state.adminActionLoading = false;
+        state.error = action.payload;
+      });
+
+    builder
+      .addCase(changePassword.pending, (state) => {
+        state.passwordUpdating = true;
+        state.error = null;
+      })
+      .addCase(changePassword.fulfilled, (state) => {
+        state.passwordUpdating = false;
+      })
+      .addCase(changePassword.rejected, (state, action) => {
+        state.passwordUpdating = false;
+        state.error = action.payload;
+      });
+
+    builder
+      .addCase(updateUserRole.pending, (state) => {
+        state.roleUpdating = true;
+        state.error = null;
+      })
+      .addCase(updateUserRole.fulfilled, (state, action) => {
+        state.roleUpdating = false;
+        const updatedUser = action.payload?.user;
+        if (updatedUser && state.user?._id === updatedUser._id) {
+          state.user = updatedUser;
+          localStorage.setItem("user", JSON.stringify(updatedUser));
+        }
+      })
+      .addCase(updateUserRole.rejected, (state, action) => {
+        state.roleUpdating = false;
         state.error = action.payload;
       });
   },
