@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { BookPlus } from "lucide-react";
-import Input from "../ui/Input";
-import Button from "../ui/Button";
+import Input from "../ui/Input.jsx";
+import Button from "../ui/Button.jsx";
 
 export default function IssueForm({ onSubmit, onCancel }) {
   const [formData, setFormData] = useState({

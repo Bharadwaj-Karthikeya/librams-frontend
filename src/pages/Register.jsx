@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { register } from "../store/slices/authSlice";
+import { register } from "../store/slices/authSlice.js";
 import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import Input from "../components/ui/Input";
-import Select from "../components/ui/Select";
-import Button from "../components/ui/Button";
+import Input from "../components/ui/Input.jsx";
+import Select from "../components/ui/Select.jsx";
+import Button from "../components/ui/Button.jsx";
 import { BookOpen, ShieldCheck, Sparkles, UserPlus, Users } from "lucide-react";
 
 export default function Register() {

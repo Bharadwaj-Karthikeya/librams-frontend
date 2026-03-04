@@ -1,5 +1,5 @@
 import { createPortal } from "react-dom";
-import Button from "./Button";
+import Button from "./Button.jsx";
 
 export default function ConfirmModal({
   title,

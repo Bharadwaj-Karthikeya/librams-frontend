@@ -1,4 +1,4 @@
-import { classNames } from "../../utils/helpers";
+import { classNames } from "../../utils/helpers.js";
 
 const VARIANTS = {
 	neutral: "bg-[var(--surface-muted)] text-[var(--text-muted)] border border-[var(--line)]",

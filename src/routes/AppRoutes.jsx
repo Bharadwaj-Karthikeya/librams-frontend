@@ -1,13 +1,13 @@
 import { Routes, Route } from "react-router-dom";
-import Login from "../pages/Login";
-import Register from "../pages/Register";
-import Dashboard from "../pages/Dashboard";
-import ProtectedRoute from "./ProtectedRoute";
-import BookDetails from "../pages/BookDetails";
-import Books from "../pages/Books";
-import Issues from "../pages/Issues";
-import UserIssues from "../pages/UserIssues";
-import Profile from "../pages/Profile";
+import Login from "../pages/Login.jsx";
+import Register from "../pages/Register.jsx";
+import Dashboard from "../pages/Dashboard.jsx";
+import ProtectedRoute from "./ProtectedRoute.jsx";
+import BookDetails from "../pages/BookDetails.jsx";
+import Books from "../pages/Books.jsx";
+import Issues from "../pages/Issues.jsx";
+import UserIssues from "../pages/UserIssues.jsx";
+import Profile from "../pages/Profile.jsx";
 
 export default function AppRoutes() {
   return (

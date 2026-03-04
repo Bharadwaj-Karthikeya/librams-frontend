@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { login } from "../store/slices/authSlice";
+import { login } from "../store/slices/authSlice.js";
 import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import Input from "../components/ui/Input";
-import Button from "../components/ui/Button";
+import Input from "../components/ui/Input.jsx";
+import Button from "../components/ui/Button.jsx";
 import { BookOpen, LogIn, ShieldCheck, Sparkles } from "lucide-react";
 
 export default function Login() {

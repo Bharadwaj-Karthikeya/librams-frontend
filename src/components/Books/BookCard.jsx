@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import Badge from "../ui/Badge";
-import Button from "../ui/Button";
+import Badge from "../ui/Badge.jsx";
+import Button from "../ui/Button.jsx";
 
 export default function BookCard({ book, onView }) {
 	if (!book) return null;

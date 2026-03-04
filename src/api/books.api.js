@@ -1,6 +1,6 @@
 // src/api/books.api.js
 
-import api from "./axios";
+import api from "./axios.js";
 
 // GET ALL
 export const getBooks = () =>
